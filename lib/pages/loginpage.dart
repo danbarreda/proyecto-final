@@ -1,47 +1,6 @@
 import 'package:flutter/material.dart';
 import "package:google_fonts/google_fonts.dart";
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-    @override
-    Widget build(BuildContext context){
-        return Center(
-            child: Container(
-                color: Colors.blue.shade300,
-                /*child: Text(
-                    "hola"
-                    )*/
-            )
-        );
-    }
-}
-
-class BarraSuperior extends StatelessWidget {
-  const BarraSuperior({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBar(
-        title: Text(
-        '¡Bienvenido a Samanet!',
-        style: TextStyle(
-            fontSize: 24.0,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-        ),
-        textAlign: TextAlign.left,
-        )
-    );
-  }
-}
-
-
 void showErrorMessage(BuildContext context, String message){
   showDialog(context: context, builder: (BuildContext context) {
     return AlertDialog(
@@ -59,8 +18,6 @@ void showErrorMessage(BuildContext context, String message){
   }, 
   );
 }
-
-
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
@@ -79,12 +36,11 @@ class _LoginFormState extends State<LoginForm> {
     correo = correoController.text;
     password = passwordController.text;
     List<String> dominio = correo.split("@");
-    validated = dominio[1]== "correo.unimet.edu.ve";
+    validated = dominio[1]== "correo.unimet.edu.ve" || dominio[1] == "unimet.edu.ve";
     if (validated){
-      /* print("Correo: " + correo + "\nContrasena: " + password)
-      */;
+      print("Correo: " + correo + "\nContrasena: " + password);
     }else{
-      showErrorMessage(context, "El correo debe ser correo UNIMET: (ejemplo@correo.unimet.edu.ve)");
+      showErrorMessage(context, "El correo debe ser correo UNIMET: (ejemplo@correo.unimet.edu.ve o ejemplo@unimet.edu.ve)");
     }
   }
 
@@ -109,3 +65,28 @@ class _LoginFormState extends State<LoginForm> {
     );
   }
 }
+
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: Text("SAMANET.",
+        selectionColor: Colors.deepOrange.shade400,
+        textAlign: TextAlign.left,
+        style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, color: Colors.deepOrange),
+        ),
+      ),
+      body:Stack(
+            children: [
+              Positioned.fill(child: Image(image: AssetImage("assets/images/biblioteca.png"), fit: BoxFit.cover,)),
+              Padding(padding: EdgeInsetsGeometry.all(10), child: Center(child: LoginForm()))
+            ]
+      )
+    );
+  }
+}
+
