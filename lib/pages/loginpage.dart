@@ -31,24 +31,48 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   String correo = "";
   String password = "";
-  bool validated = false;
+  bool domvalidated = false;
+  bool passvalidated = false;
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
 
   void crearUsuario() {
-    correo = correoController.text;
+    correo = correoController.text.trim();
     password = passwordController.text;
-    List<String> dominio = correo.split("@");
-    validated =
-        dominio[1] == "correo.unimet.edu.ve" || dominio[1] == "unimet.edu.ve";
-    if (validated) {
-      print("Correo: $correo\nContrasena: $password");
-    } else {
+
+    if (correo.isEmpty) {
+      showErrorMessage(context, "El campo correo no debe estar vacío.");
+      return;
+    }
+
+    if (password.isEmpty) {
+      showErrorMessage(context, "La contraseña no debe estar vacía.");
+      return;
+    }
+
+    if (!correo.contains("@")) {
+      showErrorMessage(context, "Correo inválido. Debe contener '@'.");
+      return;
+    }
+
+    List<String> parts = correo.split("@");
+    if (parts.length != 2) {
+      showErrorMessage(context, "Correo inválido.");
+      return;
+    }
+
+    String domain = parts[1].toLowerCase();
+    bool validDomain =
+        domain == "correo.unimet.edu.ve" || domain == "unimet.edu.ve";
+
+    if (!validDomain) {
       showErrorMessage(
         context,
-        "El correo debe ser correo UNIMET: (ejemplo@correo.unimet.edu.ve o ejemplo@unimet.edu.ve)",
+        "El correo debe pertenecer a la familia UNIMET: ejemplo@correo.unimet.edu.ve o ejemplo@unimet.edu.ve",
       );
+      return;
     }
+    print("Correo: $correo\nContrasena: $password");
   }
 
   @override
@@ -59,10 +83,9 @@ class _LoginFormState extends State<LoginForm> {
         borderRadius: BorderRadius.all(Radius.elliptical(20, 20)),
       ),
       child: Padding(
-        padding: EdgeInsetsGeometry.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          spacing: 5,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
@@ -111,7 +134,6 @@ class LoginPage extends StatelessWidget {
         backgroundColor: Colors.white,
         title: Text(
           "SAMANET.",
-          selectionColor: Colors.deepOrange.shade400,
           textAlign: TextAlign.left,
           style: GoogleFonts.montserrat(
             fontWeight: FontWeight.bold,
@@ -128,7 +150,7 @@ class LoginPage extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsetsGeometry.all(10),
+            padding: EdgeInsets.all(10),
             child: Center(child: LoginForm()),
           ),
         ],
