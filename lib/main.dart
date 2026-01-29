@@ -1,16 +1,12 @@
-import 'package:biblioteca_unimet/pages/homepage.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'firebase_options.dart'; 
 import 'package:biblioteca_unimet/pages/loginpage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+
+  await Firebase.initializeApp();
+
   runApp(const MyApp());
 }
 
