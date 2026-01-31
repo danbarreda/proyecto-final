@@ -82,9 +82,5 @@ Permite reutilización en múltiples pantallas.
 Mejora la organización del código al separar UI común.
 ```
 
-
 Equipo de Desarrollo:
-Ballesteros Maria 
-Barreda Daniel
-Urdaneta Daniela
-Zarbo Giovanni
+Ballesteros Maria, Barreda Daniel, Urdaneta Daniela, Zarbo Giovanni
