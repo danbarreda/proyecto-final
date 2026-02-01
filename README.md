@@ -83,4 +83,4 @@ Mejora la organización del código al separar UI común.
 ```
 
 Equipo de Desarrollo:
-Ballesteros Maria, Barreda Daniel, Urdaneta Daniela, Zarbo Giovanni
+Abad Gustavo, Ballesteros Maria, Barreda Daniel, Urdaneta Daniela, Zarbo Giovanni
