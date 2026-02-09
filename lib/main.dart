@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:biblioteca_unimet/pages/loginpage.dart';
+import 'package:biblioteca_unimet/pages/homepage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'SAMANET',
       theme: ThemeData(
         // This is the theme of your application.
@@ -33,14 +34,10 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: LoginPage(),
-      /*
       initialRoute: "/",
       routes: {
-        "/": (context) => HomePage(),
-        "/login": (context) => LoginPage(),
-
-      },*/
+        "/": (context) => LandingPage(),
+      },
     );
   }
 }
