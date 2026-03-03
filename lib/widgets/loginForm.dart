@@ -196,7 +196,7 @@ class _LoginFormState extends State<LoginForm> {
                 color: Colors.white,
                 ),),
               TextButton(onPressed: () => {
-                navigate(context, SignUpPage()) // ¡Aquí también usé la función de Daniel!
+                navigate(context, SignUpPage())
               },
                 child: Text("Regístrate aquí", style: GoogleFonts.inter(
                   decoration: TextDecoration.underline, 
