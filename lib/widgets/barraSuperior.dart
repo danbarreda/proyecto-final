@@ -2,6 +2,8 @@ import '../pages/homepage.dart';
 import '../pages/singUpPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../pages/misSolicitudespage.dart';
+
 class BarraSuperiorDesktop extends StatelessWidget implements PreferredSizeWidget {
   
   dynamic navigate(BuildContext context, dynamic page){
@@ -50,9 +52,13 @@ class BarraSuperiorDesktop extends StatelessWidget implements PreferredSizeWidge
           const SizedBox(width: 10), 
           
           ElevatedButton(
-            onPressed: () { /* Lógica de Solicitudes */ }, 
+            onPressed: () { 
+              Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => MisSolicitudesPage()),
+            );
+            }, 
             style: actionButtonStyle, 
-            child: Text("Solicitudes", style: actionText),
+            child: Text("Actividad", style: actionText),
           ),
           const SizedBox(width: 10),
           

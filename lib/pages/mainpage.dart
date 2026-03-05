@@ -16,7 +16,7 @@ class MainPageBodyDesktop extends StatefulWidget {
 class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
   final publicacionController = TextEditingController();
   String publicacion = "";
-
+  List<String> filtrosActivos = [];
   ScrollController scrollController = ScrollController();
 
   void buscarPublicacion() {
@@ -105,7 +105,17 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(width: 300, height: 800, child: FilterSidebar()),
+              SizedBox(width: 300, height: 800, 
+              child: FilterSidebar (
+                  onFilterApplied: (listaSeleccionada) {
+                    setState(() {
+                      filtrosActivos = listaSeleccionada;
+                    });
+                    print("Desktop: Filtrando por $filtrosActivos");
+                    // Aquí tu compañero de Back-end hará la magia
+                  },
+                )
+              ),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(20),
@@ -312,7 +322,13 @@ class MainPage extends StatelessWidget {
         drawer: Drawer(
           width: 280,
           child:
-              FilterSidebar(), 
+              FilterSidebar(
+                onFilterApplied: (listaSeleccionada) {
+              // 2. Lo más simple: que solo cierre el menú al darle al botón
+              Navigator.pop(context);
+              print("Filtros seleccionados en móvil: $listaSeleccionada");
+            },
+          ),
         ),
         body: MainPageBodyMovil(),
       );
@@ -378,6 +394,7 @@ Widget buildLibroCard(Libro libro) {
                     foregroundColor: Colors.white,
                   ),
                   child: const Text("Solicitar"),
+                  
                 ),
               ),
             ],
