@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FilterSidebar extends StatefulWidget {
-  const FilterSidebar({super.key});
+  final Function(List<String>) onFilterApplied;
+  const FilterSidebar({super.key, required this.onFilterApplied});
+
   @override
   State<FilterSidebar> createState() => _FilterSidebarState();
 }
 
 class _FilterSidebarState extends State<FilterSidebar> {
+  List<String> carrerasSeleccionadas = [];
   final Map<String, bool> _carreras = {
     "Ciencias Administrativas": false,
     "Comunicación Social": false,
@@ -33,12 +36,14 @@ class _FilterSidebarState extends State<FilterSidebar> {
       color: const Color.fromARGB(255, 117, 148, 227),
       padding: const EdgeInsets.all(15),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "Filtrar por Carrera",
-            style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 10),
           Expanded(
@@ -50,7 +55,18 @@ class _FilterSidebarState extends State<FilterSidebar> {
           ),
           Center(
             child: ElevatedButton(
-              onPressed: () => print(_carreras),
+              onPressed: () {
+                setState(() {
+                  carrerasSeleccionadas = _carreras.entries
+                      .where((entry) => entry.value == true,
+                        ) 
+                      .map((entry) => entry.key) 
+                      .toList();
+                });
+                print(
+                  "Selección guardada: $carrerasSeleccionadas",
+                );
+              },
               child: const Text("Aplicar Filtro"),
             ),
           ),
@@ -63,10 +79,9 @@ class _FilterSidebarState extends State<FilterSidebar> {
     return CheckboxListTile(
       title: Text(carrera, style: const TextStyle(fontSize: 14)),
       value: _carreras[carrera],
-      controlAffinity:
-          ListTileControlAffinity.leading,
+      controlAffinity: ListTileControlAffinity.leading,
       onChanged: (bool? valor) {
-        setState(() => _carreras[carrera] = valor!); 
+        setState(() => _carreras[carrera] = valor!);
       },
     );
   }
