@@ -21,7 +21,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
     "Ingeniería de Sistemas": false,
     "Psicología": false,
     "Estudios liberales": false,
-    "Ingeniería Mecanica": false,
+    "Ingeniería Mecánica": false,
     "Idiomas modernos": false,
     "Ingeniería Civil": false,
     "Ingeniería Electrica": false,
@@ -56,16 +56,15 @@ class _FilterSidebarState extends State<FilterSidebar> {
           Center(
             child: ElevatedButton(
               onPressed: () {
+                List<String> seleccion = _carreras.entries
+                .where((entry) => entry.value == true)
+                .map((entry) => entry.key)
+                .toList();
+
                 setState(() {
-                  carrerasSeleccionadas = _carreras.entries
-                      .where((entry) => entry.value == true,
-                        ) 
-                      .map((entry) => entry.key) 
-                      .toList();
+                  carrerasSeleccionadas = seleccion;
                 });
-                print(
-                  "Selección guardada: $carrerasSeleccionadas",
-                );
+                widget.onFilterApplied(seleccion);
               },
               child: const Text("Aplicar Filtro"),
             ),

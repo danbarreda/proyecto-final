@@ -65,6 +65,20 @@ class _LoginFormState extends State<LoginForm> {
     correo = correoController.text.trim();
     password = passwordController.text.trim();
     final db = FirebaseFirestore.instance;
+
+    if (FirebaseAuth.instance.currentUser != null){
+      final docRef = db.collection("users").doc(FirebaseAuth.instance.currentUser?.email);
+      docRef.get().then(
+        (DocumentSnapshot doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          String role = data["role"]!;
+          print("Rol: $role");
+          navigate(context, MainPage(role: role,));
+        },
+        onError: (e) => print("Error getting document: $e"),
+      );
+      return;
+    }
     
     if (correo.isNotEmpty && password.isNotEmpty){ 
       try {

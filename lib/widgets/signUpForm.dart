@@ -34,13 +34,6 @@ class _SignUpFormState extends State<SignUpForm> {
     ),);
   }
 
-
-  dynamic navigate(dynamic page){
-    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-      builder: (BuildContext context) => page,
-    ),);
-  }
-
   void showPassword(){
     setState(() {
       isObscureText = !isObscureText;

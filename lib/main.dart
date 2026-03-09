@@ -5,13 +5,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:biblioteca_unimet/pages/homepage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-
+  Supabase.initialize(
+    url: "https://rsslpewxfpfpttvcovyc.supabase.co",
+    anonKey: "sb_publishable_i9F2giLC8P1gGXi4u0VWcw_pxVqF9ee"
+  );
   runApp(const MyApp());
 }
 

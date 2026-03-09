@@ -1,10 +1,12 @@
 import 'dart:math';
+import 'package:biblioteca_unimet/models/materialAcademico.dart';
 import 'package:biblioteca_unimet/widgets/barraSuperior.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:biblioteca_unimet/widgets/filterSidebar.dart';
 import 'package:biblioteca_unimet/models/libro.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MainPageBodyDesktop extends StatefulWidget {
   const MainPageBodyDesktop({super.key});
@@ -16,11 +18,45 @@ class MainPageBodyDesktop extends StatefulWidget {
 class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
   final publicacionController = TextEditingController();
   String publicacion = "";
+  List<Libro> libros = librosPrueba;
   List<String> filtrosActivos = [];
   ScrollController scrollController = ScrollController();
 
-  void buscarPublicacion() {
-    setState(() {});
+  void buscarPublicacion() async{
+    publicacion = publicacionController.text;
+    List librosFetched;
+    if (filtrosActivos.isEmpty){
+      print("Buscando: $publicacion");
+      librosFetched = await Supabase.instance.client.from("materialAcademico")
+      .select()
+      .ilike('titulo', '%$publicacion%');
+      //print(librosFetched);
+    }
+    else{
+      print("Buscando: $publicacion, con los filtros:");
+      print(filtrosActivos);
+      librosFetched = await Supabase.instance.client.from("materialAcademico")
+      .select()
+      .ilike('titulo', '%$publicacion%')
+      .contains('categoria', filtrosActivos);
+      //print(librosFetched);
+    }
+    setState(()  {
+      libros.clear();
+      for (int i = 0; i < librosFetched.length; i++) {
+      var item = librosFetched[i];
+      List<String> autoresArray = List<String>.from(item["autor"] ?? []);
+      List<dynamic> imagenesList = item["imagenesurl"] ?? [];
+      String imagenString = imagenesList.isNotEmpty ? imagenesList[0].toString(): "";
+      libros.add(Libro(
+        titulo: item["titulo"],
+        autor: autoresArray, 
+        imagenUrl: imagenString, 
+        carrera: item["materia"], 
+      ));
+      print(imagenString);
+    }
+    });
   }
 
   @override
@@ -83,7 +119,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () => buscarPublicacion(),
+                      onPressed: () async => buscarPublicacion(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange.shade400,
                         foregroundColor: Colors.white,
@@ -112,6 +148,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                       filtrosActivos = listaSeleccionada;
                     });
                     print("Desktop: Filtrando por $filtrosActivos");
+                    buscarPublicacion();
                     // Aquí tu compañero de Back-end hará la magia
                   },
                 )
@@ -130,20 +167,19 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                         ),
                       ),
                       const SizedBox(height: 30),
-
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: librosPrueba.length,
+                        itemCount: libros.length,
                         gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: (screenWidth / 300 >= 2.7) ? 3: 2,
                               crossAxisSpacing: 25,
                               mainAxisSpacing: 25,
                               childAspectRatio: 0.65,
                             ),
                         itemBuilder: (context, index) {
-                          return buildLibroCard(librosPrueba[index]);
+                          return buildLibroCard(libros[index]);
                         }, 
                       ),
                     ],
@@ -159,7 +195,8 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
 }
 
 class MainPageBodyMovil extends StatefulWidget {
-  const MainPageBodyMovil({super.key});
+  final List<String> filtrosActivos;
+  const MainPageBodyMovil({super.key, required this.filtrosActivos});
 
   @override
   State<MainPageBodyMovil> createState() => _MainPageBodyMovilState();
@@ -168,11 +205,47 @@ class MainPageBodyMovil extends StatefulWidget {
 class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
   String publicacion = "";
   final publicacionController = TextEditingController();
+  List<Libro> libros = librosPrueba;
   ScrollController scrollController = ScrollController();
 
-  void buscarPublicacion() {
-    setState(() {});
+  void buscarPublicacion() async{
+    publicacion = publicacionController.text;
+    List librosFetched;
+    print(widget.filtrosActivos);
+    if (widget.filtrosActivos.isEmpty){
+      print("Buscando sin filtros: $publicacion");
+      librosFetched = await Supabase.instance.client.from("materialAcademico")
+      .select()
+      .ilike('titulo', '%$publicacion%');
+     //print(librosFetched);
+    }
+    else{
+      print("Buscando: $publicacion, con los filtros:");
+      print(widget.filtrosActivos);
+      librosFetched = await Supabase.instance.client.from("materialAcademico")
+      .select()
+      .ilike('titulo', '%$publicacion%')
+      .contains('categoria', widget.filtrosActivos);
+      //print(librosFetched);
+    }
+    setState(()  {
+      libros.clear();
+      for (int i = 0; i < librosFetched.length; i++) {
+      var item = librosFetched[i];
+      List<String> autoresArray = List<String>.from(item["autor"] ?? []);
+      List<dynamic> imagenesList = item["imagenesurl"] ?? [];
+      String imagenString = imagenesList.isNotEmpty ? imagenesList[0].toString(): "";
+      libros.add(Libro(
+        titulo: item["titulo"],
+        autor: autoresArray, 
+        imagenUrl: imagenString, 
+        carrera: item["materia"], 
+      ));
+      print(imagenString);
+    }
+    });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +308,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () => buscarPublicacion(),
+                      onPressed: () async => buscarPublicacion(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange.shade400,
                         foregroundColor: Colors.white,
@@ -286,7 +359,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: librosPrueba.length,
+                  itemCount: libros.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 15,
@@ -294,7 +367,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                     childAspectRatio: 0.65,
                   ),
                   itemBuilder: (context, index) =>
-                      buildLibroCard(librosPrueba[index]),
+                      buildLibroCard(libros[index]),
                 ),
               ],
             ),
@@ -305,32 +378,43 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
   }
 }
 
-class MainPage extends StatelessWidget {
-  const MainPage({super.key, required String role});
+class MainPage extends StatefulWidget {
+  final String role;
+  
+  const MainPage({super.key, required this.role});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  List<String> filtrosActivos = [];
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 600) {
+    
+    if (screenWidth > 700) {
       return Scaffold(
-        appBar: BarraSuperiorDesktop(),
-        body: MainPageBodyDesktop(),
+        appBar: BarraSuperiorDesktop(), 
+        body: const MainPageBodyDesktop(),
       );
     } else {
       return Scaffold(
         appBar: const BarraSuperiorMovil(),
         drawer: Drawer(
           width: 280,
-          child:
-              FilterSidebar(
-                onFilterApplied: (listaSeleccionada) {
-              // 2. Lo más simple: que solo cierre el menú al darle al botón
-              Navigator.pop(context);
-              print("Filtros seleccionados en móvil: $listaSeleccionada");
+          child: FilterSidebar(
+            onFilterApplied: (listaSeleccionada) {
+              setState(() {
+                filtrosActivos = listaSeleccionada;
+              });
+              Navigator.pop(context); 
+              print("$filtrosActivos");
             },
           ),
         ),
-        body: MainPageBodyMovil(),
+        body: MainPageBodyMovil(filtrosActivos: filtrosActivos),
       );
     }
   }
@@ -355,7 +439,7 @@ Widget buildLibroCard(Libro libro) {
         Expanded(
           child: ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.asset(
+            child: Image.network(
               libro.imagenUrl,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -381,7 +465,7 @@ Widget buildLibroCard(Libro libro) {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                libro.autor,
+                libro.autor[0],
                 style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
               ),
               const SizedBox(height: 10),

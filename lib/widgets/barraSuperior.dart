@@ -105,7 +105,7 @@ class BarraSuperiorMovil extends StatelessWidget implements PreferredSizeWidget 
           "SAMANET.",
           textAlign: TextAlign.left,
           style: GoogleFonts.montserrat(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w900,
             color: Colors.deepOrange,
             fontStyle: FontStyle.italic,
           ),)
