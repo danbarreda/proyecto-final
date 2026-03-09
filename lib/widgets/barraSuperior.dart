@@ -3,6 +3,7 @@ import '../pages/singUpPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../pages/misSolicitudespage.dart';
+import '../pages/crearPublicacionPage.dart'; 
 
 class BarraSuperiorDesktop extends StatelessWidget implements PreferredSizeWidget {
   
@@ -45,7 +46,9 @@ class BarraSuperiorDesktop extends StatelessWidget implements PreferredSizeWidge
         ),
         actions: [
           ElevatedButton(
-            onPressed: () { /* Lógica de Crear Publicación */ }, 
+            onPressed: () { Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const CrearPublicacionPage()),
+      );}, 
             style: actionButtonStyle, 
             child: Text("Crear Publicación", style: actionText),
           ),
