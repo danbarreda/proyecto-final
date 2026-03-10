@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../pages/mainpage.dart';
 import '../pages/singUpPage.dart';
-import '../pages/Adminpage.dart';
 
 void showErrorMessage(BuildContext context, String message) {
   showDialog(
@@ -67,12 +66,6 @@ class _LoginFormState extends State<LoginForm> {
         User? user = credential.user;
 
         if (user != null) {
-          if (correo == 'admin@unimet.edu.ve') {
-            print("Rol: admin");
-            if (!mounted) return;
-            navigate(context, const PantallaAdmin());
-            return;
-          }
 
           final doc = await db.collection("users").doc(correo).get();
 

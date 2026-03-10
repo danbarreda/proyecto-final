@@ -3,13 +3,14 @@ import '../widgets/crearPublicacionForm.dart';
 import '../widgets/barraSuperior.dart'; 
 
 class CrearPublicacionPage extends StatelessWidget {
-  const CrearPublicacionPage({super.key});
+  final String role;
+  const CrearPublicacionPage({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true, 
-      appBar: BarraSuperiorDesktop(), 
+      appBar: BarraSuperiorDesktop(role: role), 
       body: Stack(
         children: [
           Container(

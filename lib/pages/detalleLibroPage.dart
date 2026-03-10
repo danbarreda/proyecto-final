@@ -7,8 +7,9 @@ import '../widgets/barraSuperior.dart';
 
 class DetalleLibroPage extends StatelessWidget {
   final Libro libro;
+  final String role;
 
-  const DetalleLibroPage({super.key, required this.libro});
+  const DetalleLibroPage({super.key, required this.libro, required this.role});
 
   void solicitarLibro(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -57,7 +58,7 @@ class DetalleLibroPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: isDesktop ? BarraSuperiorDesktop() : const BarraSuperiorMovil(),
+      appBar: isDesktop ? BarraSuperiorDesktop(role: role) : const BarraSuperiorMovil(),
       body: SingleChildScrollView(
         child: Center(
           child: Container(

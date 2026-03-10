@@ -3,10 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../pages/misSolicitudespage.dart';
 import '../pages/crearPublicacionPage.dart';
+import '../pages/Adminpage.dart';
 
 class BarraSuperiorDesktop extends StatelessWidget
     implements PreferredSizeWidget {
-  BarraSuperiorDesktop({super.key});
+  final String role;
+  BarraSuperiorDesktop({super.key, required this.role});
+  
+  bool isAdmin(){
+    return role == "admin";
+  }
+
 
   dynamic navigate(BuildContext context, dynamic page) {
     Navigator.of(context).pushReplacement(
@@ -105,6 +112,39 @@ class BarraSuperiorDesktop extends StatelessWidget
 
   @override
   Widget build(BuildContext context) {
+
+      List <Widget> actionsList = [
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => CrearPublicacionPage(role: role),
+              ),
+            );
+          },
+          style: actionButtonStyle,
+          child: Text("Crear Publicación", style: actionText),
+        ),
+        const SizedBox(width: 10),
+
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => MisSolicitudesPage(role: role,)),
+            );
+          },
+          style: actionButtonStyle,
+          child: Text("Actividad", style: actionText),
+        ),
+        const SizedBox(width: 10),
+
+        ElevatedButton(
+          onPressed: () => _mostrarDialogoContribucion(context),
+          style: actionButtonStyle,
+          child: Text("Contribuir", style: actionText),
+        ),
+        const SizedBox(width: 10),
+        ];
     return AppBar(
       backgroundColor: Colors.white,
       title: InkWell(
@@ -119,47 +159,7 @@ class BarraSuperiorDesktop extends StatelessWidget
           ),
         ),
       ),
-      actions: [
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const CrearPublicacionPage(),
-              ),
-            );
-          },
-          style: actionButtonStyle,
-          child: Text("Crear Publicación", style: actionText),
-        ),
-        const SizedBox(width: 10),
-
-        ElevatedButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => MisSolicitudesPage()),
-            );
-          },
-          style: actionButtonStyle,
-          child: Text("Actividad", style: actionText),
-        ),
-        const SizedBox(width: 10),
-
-        ElevatedButton(
-          onPressed: () => _mostrarDialogoContribucion(context),
-          style: actionButtonStyle,
-          child: Text("Contribuir", style: actionText),
-        ),
-        const SizedBox(width: 10),
-
-        ElevatedButton(
-          onPressed: () {
-            navigate(context, const LandingPage());
-          },
-          style: actionButtonStyle,
-          child: Text("Salir", style: actionText),
-        ),
-        const SizedBox(width: 20),
-      ],
+      actions: actionsList
     );
   }
 

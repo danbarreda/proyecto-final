@@ -8,7 +8,8 @@ import '../widgets/tarjetaPerfil.dart';
 import '../widgets/tarjetaLibroActividad.dart';
 
 class MisSolicitudesPage extends StatelessWidget {
-  MisSolicitudesPage({super.key});
+  final String role;
+  MisSolicitudesPage({super.key, required this.role});
 
   Color _obtenerColorPorEstado(String estado) {
     switch (estado.toLowerCase()) {
@@ -30,7 +31,7 @@ class MisSolicitudesPage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      appBar: BarraSuperiorDesktop(),
+      appBar: BarraSuperiorDesktop(role: role),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -80,7 +81,7 @@ class MisSolicitudesPage extends StatelessWidget {
 
                     return TarjetaPerfil(
                       nombre:
-                          data['nombre'] ??
+                          data['nombreCompleto'] ??
                           data['name'] ??
                           "Usuario sin nombre",
                       cedula: data['cedula'] ?? data['id'] ?? "N/A",
