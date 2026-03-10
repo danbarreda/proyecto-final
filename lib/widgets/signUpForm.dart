@@ -18,8 +18,6 @@ class _SignUpFormState extends State<SignUpForm> {
   String password = "";
   String cedulaStr = "";
   String nombresApellidos = "";
-  bool domvalidated = false;
-  bool passvalidated = false;
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   final cedulaController = TextEditingController();
@@ -28,18 +26,18 @@ class _SignUpFormState extends State<SignUpForm> {
   final db = FirebaseFirestore.instance;
   late final usersCollection = db.collection("users");
 
-  dynamic navigate(dynamic page){
-    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-      builder: (BuildContext context) => page,
-    ),);
+  dynamic navigate(dynamic page) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (BuildContext context) => page),
+    );
   }
 
-  void showPassword(){
+  void showPassword() {
     setState(() {
       isObscureText = !isObscureText;
     });
   }
-  
+
   void crearUsuario() async {
     correo = correoController.text.trim();
     password = passwordController.text;
@@ -47,6 +45,7 @@ class _SignUpFormState extends State<SignUpForm> {
     cedulaStr = cedulaController.text;
     int? cedulaParsed = int.tryParse(cedulaStr);
 
+    // --- Validaciones Locales ---
     if (correo.isEmpty) {
       showErrorMessage(context, "El campo correo no debe estar vacío.");
       return;
@@ -58,17 +57,23 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     if (cedulaStr.isEmpty) {
-      showErrorMessage(context, "La cedula no debe estar vacía.");
+      showErrorMessage(context, "La cédula no debe estar vacía.");
       return;
     }
 
-    if (cedulaParsed == null){
-      showErrorMessage(context, "La cedula no puede contener puntos ni letras, deben ser solamente caracteres numericos\nEjemplo: 25867420");
+    if (cedulaParsed == null) {
+      showErrorMessage(
+        context,
+        "La cédula no puede contener puntos ni letras, deben ser solamente caracteres numéricos\nEjemplo: 25867420",
+      );
       return;
     }
 
     if (nombresApellidos.isEmpty) {
-      showErrorMessage(context, "Los nombres y apellidos no deben estar vacíos.");
+      showErrorMessage(
+        context,
+        "Los nombres y apellidos no deben estar vacíos.",
+      );
       return;
     }
 
@@ -85,7 +90,7 @@ class _SignUpFormState extends State<SignUpForm> {
 
     String domain = parts[1].toLowerCase();
     bool validDomain =
-      domain == "correo.unimet.edu.ve" || domain == "unimet.edu.ve";
+        domain == "correo.unimet.edu.ve" || domain == "unimet.edu.ve";
     if (!validDomain) {
       showErrorMessage(
         context,
@@ -94,189 +99,143 @@ class _SignUpFormState extends State<SignUpForm> {
       return;
     }
 
-    //logica con firebase y redireccion a mainpage
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: correo,
-        password: password,
-      );
-      print("$credential");
-      usersCollection.doc(correo).set(
-        {
-          "role": "user",
-          "cedula": cedulaStr,
-        }
-      );
-      navigate(MainPage(role: "user",));
-      } on FirebaseAuthException catch (e) {
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: correo, password: password);
+
+      await usersCollection.doc(correo).set({
+        "role": "user",
+        "cedula": cedulaStr,
+        "nombre": nombresApellidos,
+      });
+
+      navigate(const MainPage(role: "user"));
+    } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
+        showErrorMessage(
+          context,
+          "La contraseña es muy corta o sencilla. Debe tener al menos 6 caracteres.",
+        );
       } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
+        showErrorMessage(
+          context,
+          "Este correo ya está registrado en el sistema.",
+        );
+      } else {
+        showErrorMessage(context, "Ocurrió un error: ${e.message}");
       }
     } catch (e) {
+      showErrorMessage(
+        context,
+        "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      );
       print(e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    //double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     bool isDesktop = screenWidth > 600;
-    TextStyle textStyle = GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold);
+    TextStyle textStyle = GoogleFonts.inter(
+      color: Colors.white,
+      fontWeight: FontWeight.bold,
+    );
 
     return Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          spacing: 40,
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start, 
-              spacing: 10,
-              children: [
-                Text("Nombres y Apellidos:", textAlign: TextAlign.start,style: textStyle,),
-                SizedBox(             
-                  width: isDesktop ? min(screenWidth*0.5,600) : screenWidth - 100,
-                  child: TextField(
-                  controller: nombresApellidosController,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: const Color.fromARGB(255, 110, 108, 108)
-                    ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.deepOrange.shade400, 
-                        width: 2.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.blue, 
-                        width: 2.0,
-                    ),),
-                    hoverColor: Colors.lightBlue.shade100,
-                  ),
-                )
-                ),
-                Text("Cédula de Identidad:", textAlign: TextAlign.start,style: textStyle,),
-                SizedBox(             
-                  width: isDesktop ? min(screenWidth*0.5,600) : screenWidth - 100,
-                  child: TextField(
-                  controller: cedulaController,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: const Color.fromARGB(255, 110, 108, 108)
-                    ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.deepOrange.shade400, 
-                        width: 2.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.blue, 
-                        width: 2.0,
-                    ),),
-                    hoverColor: Colors.lightBlue.shade100,
-                  ),
-                )
-                ),
-                Text("Correo Electrónico Institucional:", textAlign: TextAlign.start,style: textStyle,),
-                SizedBox(             
-                  width: isDesktop ? min(screenWidth*0.5,600) : screenWidth - 100,
-                  child: TextField(
-                  controller: correoController,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: const Color.fromARGB(255, 110, 108, 108)
-                    ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.deepOrange.shade400, 
-                        width: 2.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.blue, 
-                        width: 2.0,
-                    ),),
-                    hoverColor: Colors.lightBlue.shade100,
-                  ),
-                )
-                ),
-                Text("Contraseña:", textAlign: TextAlign.start,style: textStyle,),
-                SizedBox(
-                  width: isDesktop ? min(screenWidth*0.5,600) : screenWidth - 100,
-                  child: TextField(
-                  obscureText: isObscureText,
-                  controller: passwordController,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold,
-                    color: const Color.fromARGB(255, 110, 108, 108)
-                    ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    suffixIcon: IconButton(icon: Icon(isObscureText ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          isObscureText = !isObscureText;
-                        });
-                      },
-                    ),
-                    border: OutlineInputBorder(),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.deepOrange.shade400, 
-                        width: 2.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.5),
-                      borderSide: BorderSide(
-                        color: Colors.blue, 
-                        width: 2.0,
-                    ),),
-                    hoverColor: const Color.fromARGB(255, 233, 205, 196),
-                  ),
-                )),
-              ]
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Nombres y Apellidos:", style: textStyle),
+              const SizedBox(height: 10),
+              _buildTextField(
+                nombresApellidosController,
+                isDesktop,
+                screenWidth,
+                false,
+              ),
+              const SizedBox(height: 20),
+              Text("Cédula de Identidad:", style: textStyle),
+              const SizedBox(height: 10),
+              _buildTextField(cedulaController, isDesktop, screenWidth, false),
+              const SizedBox(height: 20),
+              Text("Correo Electrónico Institucional:", style: textStyle),
+              const SizedBox(height: 10),
+              _buildTextField(correoController, isDesktop, screenWidth, false),
+              const SizedBox(height: 20),
+              Text("Contraseña:", style: textStyle),
+              const SizedBox(height: 10),
+              _buildTextField(passwordController, isDesktop, screenWidth, true),
+            ],
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton(
+            onPressed: () => crearUsuario(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepOrange.shade400,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-            ElevatedButton(
-              onPressed: () => crearUsuario(),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange.shade400, foregroundColor: Colors.white),
-              child: Text("Acceder", style: GoogleFonts.inter(
-                fontWeight: FontWeight.w500,
+            child: Text(
+              "Acceder",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
-              ),),
+              ),
             ),
-          ],
-        )
-        );
-  } 
-}
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildTextField(
+    TextEditingController controller,
+    bool isDesktop,
+    double screenWidth,
+    bool isPassword,
+  ) {
+    return SizedBox(
+      width: isDesktop ? min(screenWidth * 0.5, 600) : screenWidth - 100,
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword ? isObscureText : false,
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.bold,
+          color: const Color(0xFF6E6C6C),
+        ),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: Colors.white,
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    isObscureText ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: showPassword,
+                )
+              : null,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.5),
+            borderSide: BorderSide(
+              color: Colors.deepOrange.shade400,
+              width: 2.0,
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12.5),
+            borderSide: const BorderSide(color: Colors.blue, width: 2.0),
+          ),
+        ),
+      ),
+    );
+  }
+}
