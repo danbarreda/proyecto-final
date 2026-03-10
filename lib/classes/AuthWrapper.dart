@@ -4,37 +4,42 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  User? user = FirebaseAuth.instance.currentUser;
-  final db = FirebaseFirestore.instance;
-
-  @override
   Widget build(BuildContext context) {
-    if (user == null){
-      print("No ha iniciado sesion");
-      return LandingPage();
-    }/*else if(!user.emailVerified){
-    //falta crear una pagina de verificar email
-      return VerifyEmailPage();
-    }*/else{
-      print("Si tiene sesion iniciada");
-      String correo = user!.email!;
-      String role = "";
-      db.collection("users").doc(correo).get().then((DocumentSnapshot documentSnapshot) {
-        if (documentSnapshot.exists) {
-          role = documentSnapshot.get("role");
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-      }).catchError((error) {
-        print("Error getting document: $error");
-      });
-      return MainPage(role: role,);
-    }
+        if (snapshot.hasData) {
+          final user = snapshot.data!;
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection("users")
+                .doc(user.email)
+                .get(),
+            builder: (context, userSnapshot) {
+              if (userSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              String role = "user";
+              if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                role = userSnapshot.data!.get("role") ?? "user";
+              }
+              return MainPage(role: role);
+            },
+          );
+        }
+        return const LandingPage();
+      },
+    );
   }
 }

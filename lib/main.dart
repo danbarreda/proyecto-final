@@ -1,10 +1,8 @@
 import 'package:biblioteca_unimet/classes/AuthWrapper.dart';
 import 'package:biblioteca_unimet/firebase_options.dart';
-import 'package:biblioteca_unimet/pages/mainpage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:biblioteca_unimet/pages/homepage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
@@ -14,7 +12,7 @@ void main() async {
   await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   Supabase.initialize(
     url: "https://rsslpewxfpfpttvcovyc.supabase.co",
-    anonKey: "sb_publishable_i9F2giLC8P1gGXi4u0VWcw_pxVqF9ee"
+    anonKey: "sb_publishable_i9F2giLC8P1gGXi4u0VWcw_pxVqF9ee",
   );
   runApp(const MyApp());
 }

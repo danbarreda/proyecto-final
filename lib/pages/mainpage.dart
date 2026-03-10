@@ -1,12 +1,12 @@
 import 'dart:math';
-import 'package:biblioteca_unimet/models/materialAcademico.dart';
 import 'package:biblioteca_unimet/widgets/barraSuperior.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:biblioteca_unimet/widgets/filterSidebar.dart';
 import 'package:biblioteca_unimet/models/libro.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'detalleLibroPage.dart';
 
 class MainPageBodyDesktop extends StatefulWidget {
   const MainPageBodyDesktop({super.key});
@@ -18,45 +18,79 @@ class MainPageBodyDesktop extends StatefulWidget {
 class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
   final publicacionController = TextEditingController();
   String publicacion = "";
-  List<Libro> libros = librosPrueba;
+  List<Libro> libros = [];
   List<String> filtrosActivos = [];
   ScrollController scrollController = ScrollController();
 
-  void buscarPublicacion() async{
-    publicacion = publicacionController.text;
-    List librosFetched;
-    if (filtrosActivos.isEmpty){
-      print("Buscando: $publicacion");
-      librosFetched = await Supabase.instance.client.from("materialAcademico")
-      .select()
-      .ilike('titulo', '%$publicacion%');
-      //print(librosFetched);
+  @override
+  void initState() {
+    super.initState();
+    buscarPublicacion();
+  }
+
+  void buscarPublicacion() async {
+    publicacion = publicacionController.text.trim();
+    List<dynamic> librosFetched = [];
+
+    try {
+      var query = Supabase.instance.client.from("materialAcademico").select();
+
+      if (publicacion.isNotEmpty) {
+        query = query.ilike('titulo', '%$publicacion%');
+      }
+
+      if (filtrosActivos.isNotEmpty) {
+        query = query.contains('categoria', filtrosActivos);
+      }
+
+      librosFetched = await query;
+
+      if (!mounted) return;
+
+      setState(() {
+        libros.clear();
+        for (var item in librosFetched) {
+          String tituloItem = item["titulo"]?.toString() ?? "Sin Título";
+
+          dynamic autorData = item["autor"];
+          List<String> autoresArray = [];
+          if (autorData is String) {
+            autoresArray = [autorData];
+          } else if (autorData is List) {
+            autoresArray = List<String>.from(
+              autorData.map((e) => e.toString()),
+            );
+          } else {
+            autoresArray = ["Desconocido"];
+          }
+
+          dynamic imagenesData = item["imagenesurl"];
+          String imagenString = "";
+          if (imagenesData is List && imagenesData.isNotEmpty) {
+            imagenString = imagenesData[0].toString();
+          } else if (imagenesData is String) {
+            imagenString = imagenesData;
+          }
+
+          libros.add(
+            Libro(
+              id: item["id"]?.toString() ?? "",
+              titulo: tituloItem,
+              autor: autoresArray,
+              imagenUrl: imagenString,
+              carrera: item["materia"]?.toString() ?? "General",
+              descripcion:
+                  item["descripcion"]?.toString() ??
+                  "Sin descripción disponible.",
+              estadoFisico:
+                  item["estadofisico"]?.toString() ?? "No especificado",
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
     }
-    else{
-      print("Buscando: $publicacion, con los filtros:");
-      print(filtrosActivos);
-      librosFetched = await Supabase.instance.client.from("materialAcademico")
-      .select()
-      .ilike('titulo', '%$publicacion%')
-      .contains('categoria', filtrosActivos);
-      //print(librosFetched);
-    }
-    setState(()  {
-      libros.clear();
-      for (int i = 0; i < librosFetched.length; i++) {
-      var item = librosFetched[i];
-      List<String> autoresArray = List<String>.from(item["autor"] ?? []);
-      List<dynamic> imagenesList = item["imagenesurl"] ?? [];
-      String imagenString = imagenesList.isNotEmpty ? imagenesList[0].toString(): "";
-      libros.add(Libro(
-        titulo: item["titulo"],
-        autor: autoresArray, 
-        imagenUrl: imagenString, 
-        carrera: item["materia"], 
-      ));
-      print(imagenString);
-    }
-    });
   }
 
   @override
@@ -71,7 +105,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
         children: [
           Stack(
             children: [
-              Container(
+              SizedBox(
                 height: 350,
                 width: double.infinity,
                 child: Image.asset(
@@ -98,7 +132,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.5),
                             borderSide: BorderSide(
@@ -108,7 +142,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.5),
-                            borderSide: BorderSide(
+                            borderSide: const BorderSide(
                               color: Colors.blue,
                               width: 2.0,
                             ),
@@ -119,7 +153,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () async => buscarPublicacion(),
+                      onPressed: buscarPublicacion,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange.shade400,
                         foregroundColor: Colors.white,
@@ -137,21 +171,20 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
               ),
             ],
           ),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 300, height: 800, 
-              child: FilterSidebar (
+              SizedBox(
+                width: 300,
+                height: 800,
+                child: FilterSidebar(
                   onFilterApplied: (listaSeleccionada) {
                     setState(() {
                       filtrosActivos = listaSeleccionada;
                     });
-                    print("Desktop: Filtrando por $filtrosActivos");
                     buscarPublicacion();
-                    // Aquí tu compañero de Back-end hará la magia
                   },
-                )
+                ),
               ),
               Expanded(
                 child: Container(
@@ -171,16 +204,15 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: libros.length,
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: (screenWidth / 300 >= 2.7) ? 3: 2,
-                              crossAxisSpacing: 25,
-                              mainAxisSpacing: 25,
-                              childAspectRatio: 0.65,
-                            ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: (screenWidth / 300 >= 2.7) ? 3 : 2,
+                          crossAxisSpacing: 25,
+                          mainAxisSpacing: 25,
+                          childAspectRatio: 0.65,
+                        ),
                         itemBuilder: (context, index) {
-                          return buildLibroCard(libros[index]);
-                        }, 
+                          return buildLibroCard(context, libros[index]);
+                        },
                       ),
                     ],
                   ),
@@ -205,47 +237,87 @@ class MainPageBodyMovil extends StatefulWidget {
 class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
   String publicacion = "";
   final publicacionController = TextEditingController();
-  List<Libro> libros = librosPrueba;
+  List<Libro> libros = [];
   ScrollController scrollController = ScrollController();
 
-  void buscarPublicacion() async{
-    publicacion = publicacionController.text;
-    List librosFetched;
-    print(widget.filtrosActivos);
-    if (widget.filtrosActivos.isEmpty){
-      print("Buscando sin filtros: $publicacion");
-      librosFetched = await Supabase.instance.client.from("materialAcademico")
-      .select()
-      .ilike('titulo', '%$publicacion%');
-     //print(librosFetched);
-    }
-    else{
-      print("Buscando: $publicacion, con los filtros:");
-      print(widget.filtrosActivos);
-      librosFetched = await Supabase.instance.client.from("materialAcademico")
-      .select()
-      .ilike('titulo', '%$publicacion%')
-      .contains('categoria', widget.filtrosActivos);
-      //print(librosFetched);
-    }
-    setState(()  {
-      libros.clear();
-      for (int i = 0; i < librosFetched.length; i++) {
-      var item = librosFetched[i];
-      List<String> autoresArray = List<String>.from(item["autor"] ?? []);
-      List<dynamic> imagenesList = item["imagenesurl"] ?? [];
-      String imagenString = imagenesList.isNotEmpty ? imagenesList[0].toString(): "";
-      libros.add(Libro(
-        titulo: item["titulo"],
-        autor: autoresArray, 
-        imagenUrl: imagenString, 
-        carrera: item["materia"], 
-      ));
-      print(imagenString);
-    }
-    });
+  @override
+  void initState() {
+    super.initState();
+    buscarPublicacion();
   }
 
+  @override
+  void didUpdateWidget(covariant MainPageBodyMovil oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.filtrosActivos != widget.filtrosActivos) {
+      buscarPublicacion();
+    }
+  }
+
+  void buscarPublicacion() async {
+    publicacion = publicacionController.text.trim();
+    List<dynamic> librosFetched = [];
+
+    try {
+      var query = Supabase.instance.client.from("materialAcademico").select();
+
+      if (publicacion.isNotEmpty) {
+        query = query.ilike('titulo', '%$publicacion%');
+      }
+
+      if (widget.filtrosActivos.isNotEmpty) {
+        query = query.contains('categoria', widget.filtrosActivos);
+      }
+
+      librosFetched = await query;
+
+      if (!mounted) return;
+
+      setState(() {
+        libros.clear();
+        for (var item in librosFetched) {
+          String tituloItem = item["titulo"]?.toString() ?? "Sin Título";
+
+          dynamic autorData = item["autor"];
+          List<String> autoresArray = [];
+          if (autorData is String) {
+            autoresArray = [autorData];
+          } else if (autorData is List) {
+            autoresArray = List<String>.from(
+              autorData.map((e) => e.toString()),
+            );
+          } else {
+            autoresArray = ["Desconocido"];
+          }
+
+          dynamic imagenesData = item["imagenesurl"];
+          String imagenString = "";
+          if (imagenesData is List && imagenesData.isNotEmpty) {
+            imagenString = imagenesData[0].toString();
+          } else if (imagenesData is String) {
+            imagenString = imagenesData;
+          }
+
+          libros.add(
+            Libro(
+              id: item["id"]?.toString() ?? "",
+              titulo: tituloItem,
+              autor: autoresArray,
+              imagenUrl: imagenString,
+              carrera: item["materia"]?.toString() ?? "General",
+              descripcion:
+                  item["descripcion"]?.toString() ??
+                  "Sin descripción disponible.",
+              estadoFisico:
+                  item["estadofisico"]?.toString() ?? "No especificado",
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +331,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
         children: [
           Stack(
             children: [
-              Container(
+              SizedBox(
                 height: 300,
                 width: double.infinity,
                 child: Image.asset(
@@ -267,7 +339,6 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                   fit: BoxFit.cover,
                 ),
               ),
-
               Positioned(
                 top: 80,
                 left: 0,
@@ -287,7 +358,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.white,
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.5),
                             borderSide: BorderSide(
@@ -297,7 +368,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.5),
-                            borderSide: BorderSide(
+                            borderSide: const BorderSide(
                               color: Colors.blue,
                               width: 2.0,
                             ),
@@ -308,7 +379,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () async => buscarPublicacion(),
+                      onPressed: buscarPublicacion,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange.shade400,
                         foregroundColor: Colors.white,
@@ -367,7 +438,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                     childAspectRatio: 0.65,
                   ),
                   itemBuilder: (context, index) =>
-                      buildLibroCard(libros[index]),
+                      buildLibroCard(context, libros[index]),
                 ),
               ],
             ),
@@ -380,7 +451,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
 
 class MainPage extends StatefulWidget {
   final String role;
-  
+
   const MainPage({super.key, required this.role});
 
   @override
@@ -393,10 +464,10 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    
+
     if (screenWidth > 700) {
       return Scaffold(
-        appBar: BarraSuperiorDesktop(), 
+        appBar: BarraSuperiorDesktop(),
         body: const MainPageBodyDesktop(),
       );
     } else {
@@ -409,8 +480,7 @@ class _MainPageState extends State<MainPage> {
               setState(() {
                 filtrosActivos = listaSeleccionada;
               });
-              Navigator.pop(context); 
-              print("$filtrosActivos");
+              Navigator.pop(context);
             },
           ),
         ),
@@ -420,71 +490,131 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-Widget buildLibroCard(Libro libro) {
-  return Container(
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
+Widget buildLibroCard(BuildContext context, Libro libro) {
+  void solicitarLibroDirecto() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Inicia sesión para solicitar un libro.")),
+      );
+      return;
+    }
+    try {
+      await Supabase.instance.client.from('solicitudes').insert({
+        'libro_id': libro.id,
+        'usuario_correo': user.email,
+        'estado': 'Solicitado',
+        'titulo_libro': libro.titulo,
+        'imagen_libro': libro.imagenUrl,
+        'fecha_solicitud': DateTime.now().toIso8601String(),
+      });
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("¡Solicitud enviada con éxito!"),
+          backgroundColor: Colors.green,
         ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.network(
-              libro.imagenUrl,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: Colors.grey[200],
-                child: const Icon(Icons.book, size: 50, color: Colors.grey),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error al solicitar: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => DetalleLibroPage(libro: libro)),
+      );
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
               ),
+              child: libro.imagenUrl.isNotEmpty
+                  ? Image.network(
+                      libro.imagenUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.book,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child: const Icon(
+                        Icons.book,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
+                    ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                libro.titulo,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                libro.autor[0],
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF37021),
-                    foregroundColor: Colors.white,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  libro.titulo,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  child: const Text("Solicitar"),
-                  
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+                Text(
+                  libro.autor.isNotEmpty ? libro.autor[0] : 'Desconocido',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: solicitarLibroDirecto,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF37021),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text("Solicitar"),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import "package:google_fonts/google_fonts.dart";
+import 'package:google_fonts/google_fonts.dart';
 
 import '../pages/mainpage.dart';
 import '../pages/singUpPage.dart';
@@ -38,27 +38,20 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   String correo = "";
   String password = "";
-  bool domvalidated = false;
-  bool passvalidated = false;
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   bool isObscureText = true;
 
-  void showPassword() {
-    setState(() {
-      isObscureText = !isObscureText;
-    });
-  }
-
-  // funcion helper porque no puedo pasarle el buildcontext desde la funcion asincrona
   void mostrarError(String mensaje) {
+    if (!mounted) return;
     showErrorMessage(context, mensaje);
   }
 
-  // Función de Daniel para navegar
-  dynamic navigate(BuildContext context, dynamic page) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (BuildContext context) => page),
+  void navigate(BuildContext context, Widget page) {
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => page),
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -67,27 +60,6 @@ class _LoginFormState extends State<LoginForm> {
     password = passwordController.text.trim();
     final db = FirebaseFirestore.instance;
 
-    if (FirebaseAuth.instance.currentUser != null) {
-      String currentEmail = FirebaseAuth.instance.currentUser!.email!;
-
-      if (currentEmail == 'admin@unimet.edu.ve') {
-        navigate(context, const PantallaAdmin());
-        return;
-      }
-
-      final docRef = db.collection("users").doc(currentEmail);
-      docRef.get().then((DocumentSnapshot doc) {
-        if (doc.exists) {
-          final data = doc.data() as Map<String, dynamic>;
-          String role = data["role"] ?? "user";
-          navigate(context, MainPage(role: role));
-        } else {
-          navigate(context, const MainPage(role: "user"));
-        }
-      }, onError: (e) => print("Error getting document: $e"));
-      return;
-    }
-
     if (correo.isNotEmpty && password.isNotEmpty) {
       try {
         final credential = await FirebaseAuth.instance
@@ -95,25 +67,29 @@ class _LoginFormState extends State<LoginForm> {
         User? user = credential.user;
 
         if (user != null) {
-          if (!mounted) return;
-
           if (correo == 'admin@unimet.edu.ve') {
+            print("Rol: admin");
+            if (!mounted) return;
             navigate(context, const PantallaAdmin());
             return;
           }
-          final docRef = db.collection("users").doc(correo);
-          docRef.get().then((DocumentSnapshot doc) {
-            if (doc.exists) {
-              final data = doc.data() as Map<String, dynamic>;
-              String role = data["role"] ?? "user";
-              print("Rol: $role");
-              navigate(context, MainPage(role: role));
-            } else {
-              navigate(context, const MainPage(role: "user"));
-            }
-          }, onError: (e) => print("Error getting document: $e"));
+
+          final doc = await db.collection("users").doc(correo).get();
+
+          if (!mounted) return;
+
+          if (doc.exists) {
+            final data = doc.data() as Map<String, dynamic>;
+            String role = data["role"] ?? "user";
+            print("Rol: $role");
+            navigate(context, MainPage(role: role));
+          } else {
+            print("Rol: user (por defecto, no se encontró documento)");
+            navigate(context, const MainPage(role: "user"));
+          }
         }
       } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
         if (e.code == 'user-not-found' || e.code == 'invalid-email') {
           mostrarError('No se encontró un usuario con ese correo.');
         } else if (e.code == 'wrong-password' ||
@@ -123,6 +99,7 @@ class _LoginFormState extends State<LoginForm> {
           mostrarError('Error: ${e.message}');
         }
       } catch (e) {
+        if (!mounted) return;
         mostrarError('Ocurrió un error inesperado al iniciar sesión.');
       }
     } else {
@@ -183,7 +160,7 @@ class _LoginFormState extends State<LoginForm> {
                   borderRadius: BorderRadius.circular(12.5),
                   borderSide: const BorderSide(color: Colors.blue, width: 2.0),
                 ),
-                hintText: "Nombre de usuario o Correo",
+                hintText: "Correo electrónico",
                 hoverColor: Colors.lightBlue.shade100,
               ),
             ),
@@ -239,7 +216,11 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
               TextButton(
-                onPressed: () => {navigate(context, const SignUpPage())},
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SignUpPage()),
+                  );
+                },
                 child: Text(
                   "Regístrate aquí",
                   style: GoogleFonts.inter(
@@ -253,7 +234,7 @@ class _LoginFormState extends State<LoginForm> {
             ],
           ),
           ElevatedButton(
-            onPressed: () async => login(),
+            onPressed: login,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepOrange.shade400,
               foregroundColor: Colors.white,

@@ -4,7 +4,7 @@ import 'package:biblioteca_unimet/widgets/popups.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import "package:google_fonts/google_fonts.dart";
+import 'package:google_fonts/google_fonts.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({super.key});
@@ -26,7 +26,7 @@ class _SignUpFormState extends State<SignUpForm> {
   final db = FirebaseFirestore.instance;
   late final usersCollection = db.collection("users");
 
-  dynamic navigate(dynamic page) {
+  void navigate(dynamic page) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(builder: (BuildContext context) => page),
     );
@@ -45,23 +45,26 @@ class _SignUpFormState extends State<SignUpForm> {
     cedulaStr = cedulaController.text;
     int? cedulaParsed = int.tryParse(cedulaStr);
 
-    // --- Validaciones Locales ---
     if (correo.isEmpty) {
+      if (!mounted) return;
       showErrorMessage(context, "El campo correo no debe estar vacío.");
       return;
     }
 
     if (password.isEmpty) {
+      if (!mounted) return;
       showErrorMessage(context, "La contraseña no debe estar vacía.");
       return;
     }
 
     if (cedulaStr.isEmpty) {
+      if (!mounted) return;
       showErrorMessage(context, "La cédula no debe estar vacía.");
       return;
     }
 
     if (cedulaParsed == null) {
+      if (!mounted) return;
       showErrorMessage(
         context,
         "La cédula no puede contener puntos ni letras, deben ser solamente caracteres numéricos\nEjemplo: 25867420",
@@ -70,6 +73,7 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     if (nombresApellidos.isEmpty) {
+      if (!mounted) return;
       showErrorMessage(
         context,
         "Los nombres y apellidos no deben estar vacíos.",
@@ -78,12 +82,14 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     if (!correo.contains("@")) {
+      if (!mounted) return;
       showErrorMessage(context, "Correo inválido. Debe contener '@'.");
       return;
     }
 
     List<String> parts = correo.split("@");
     if (parts.length != 2) {
+      if (!mounted) return;
       showErrorMessage(context, "Correo inválido.");
       return;
     }
@@ -92,6 +98,7 @@ class _SignUpFormState extends State<SignUpForm> {
     bool validDomain =
         domain == "correo.unimet.edu.ve" || domain == "unimet.edu.ve";
     if (!validDomain) {
+      if (!mounted) return;
       showErrorMessage(
         context,
         "El correo debe pertenecer a la familia UNIMET: ejemplo@correo.unimet.edu.ve o ejemplo@unimet.edu.ve",
@@ -100,8 +107,10 @@ class _SignUpFormState extends State<SignUpForm> {
     }
 
     try {
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: correo, password: password);
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: correo,
+        password: password,
+      );
 
       await usersCollection.doc(correo).set({
         "role": "user",
@@ -109,8 +118,10 @@ class _SignUpFormState extends State<SignUpForm> {
         "nombre": nombresApellidos,
       });
 
+      if (!mounted) return;
       navigate(const MainPage(role: "user"));
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       if (e.code == 'weak-password') {
         showErrorMessage(
           context,
@@ -125,11 +136,11 @@ class _SignUpFormState extends State<SignUpForm> {
         showErrorMessage(context, "Ocurrió un error: ${e.message}");
       }
     } catch (e) {
+      if (!mounted) return;
       showErrorMessage(
         context,
         "No se pudo crear la cuenta. Inténtalo de nuevo.",
       );
-      print(e);
     }
   }
 
@@ -144,55 +155,75 @@ class _SignUpFormState extends State<SignUpForm> {
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Nombres y Apellidos:", style: textStyle),
-              const SizedBox(height: 10),
-              _buildTextField(
-                nombresApellidosController,
-                isDesktop,
-                screenWidth,
-                false,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Nombres y Apellidos:", style: textStyle),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  nombresApellidosController,
+                  isDesktop,
+                  screenWidth,
+                  false,
+                ),
+                const SizedBox(height: 20),
+                Text("Cédula de Identidad:", style: textStyle),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  cedulaController,
+                  isDesktop,
+                  screenWidth,
+                  false,
+                ),
+                const SizedBox(height: 20),
+                Text("Correo Electrónico Institucional:", style: textStyle),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  correoController,
+                  isDesktop,
+                  screenWidth,
+                  false,
+                ),
+                const SizedBox(height: 20),
+                Text("Contraseña:", style: textStyle),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  passwordController,
+                  isDesktop,
+                  screenWidth,
+                  true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () => crearUsuario(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepOrange.shade400,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 15,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              const SizedBox(height: 20),
-              Text("Cédula de Identidad:", style: textStyle),
-              const SizedBox(height: 10),
-              _buildTextField(cedulaController, isDesktop, screenWidth, false),
-              const SizedBox(height: 20),
-              Text("Correo Electrónico Institucional:", style: textStyle),
-              const SizedBox(height: 10),
-              _buildTextField(correoController, isDesktop, screenWidth, false),
-              const SizedBox(height: 20),
-              Text("Contraseña:", style: textStyle),
-              const SizedBox(height: 10),
-              _buildTextField(passwordController, isDesktop, screenWidth, true),
-            ],
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton(
-            onPressed: () => crearUsuario(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepOrange.shade400,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              child: Text(
+                "Acceder",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
-            child: Text(
-              "Acceder",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
