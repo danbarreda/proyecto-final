@@ -37,32 +37,59 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
     super.dispose();
   }
 
+  String quitarAcentos(String texto) {
+    const conAcento = 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÍÎÏíîïÙÚÛÜùúûüÑñÇç';
+    const sinAcento = 'AAAAAAaaaaaaOOOOOOooooooEEEEeeeeIIIiiiUUUUuuuuNnCc';
+    String resultado = texto;
+    for (int i = 0; i < conAcento.length; i++) {
+      resultado = resultado.replaceAll(conAcento[i], sinAcento[i]);
+    }
+    return resultado;
+  }
+
   void subirImagen() async {
     String titulo = tituloController.text;
     String year = yearController.text;
-    /*if (titulo.isEmpty || year.isEmpty){
-      showErrorMessage(context, "Por favor inserte primero el titulo y el año de publicacion antes de insertar la portada");
+    if (titulo.isEmpty || year.isEmpty) {
+      showErrorMessage(
+        context,
+        "Por favor inserte primero el título y el año de publicación antes de insertar la portada",
+      );
       return;
-    }*/
+    }
+
     final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
-    if (imagen != null){
+    if (imagen != null) {
       final bytes = await imagen.readAsBytes();
-      final fileName = "$titulo$year";
+
+      String tituloSinAcentos = quitarAcentos(titulo);
+
+      String tituloLimpio = tituloSinAcentos.replaceAll(' ', '_');
+
+      final fileName = "${tituloLimpio}_$year.jpg";
+
       try {
         await Supabase.instance.client.storage
-          .from('fotos')
-          .uploadBinary(fileName, bytes);
+            .from('fotos')
+            .uploadBinary(fileName, bytes);
         publicUrl = Supabase.instance.client.storage
-          .from('fotos')
-          .getPublicUrl(fileName);
+            .from('fotos')
+            .getPublicUrl(fileName);
         print(publicUrl);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("¡Portada subida con éxito!"),
+            backgroundColor: Colors.green,
+          ),
+        );
       } catch (e) {
-       showErrorMessage(context , 'Error inesperado: $e');
+        showErrorMessage(context, 'Error inesperado: $e');
       }
     }
   }
 
-  void publicar() async{
+  void publicar() async {
     String titulo = tituloController.text;
     String autor = autorController.text;
     String materia = materiaController.text;
@@ -71,56 +98,54 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
     String estado = estadoController.text;
     String descripcion = descController.text;
 
-    if (titulo.isEmpty){
+    if (titulo.isEmpty) {
       showErrorMessage(context, "El titulo no puede estar vacio");
       return;
     }
-    if (autor.isEmpty){
+    if (autor.isEmpty) {
       showErrorMessage(context, "El/los autor(es) no puede(n) estar vacio(s)");
       return;
     }
-    if (materia.isEmpty){
+    if (materia.isEmpty) {
       showErrorMessage(context, "La materia no puede estar vacia");
       return;
     }
-    if (year.isEmpty){
+    if (year.isEmpty) {
       showErrorMessage(context, "El año no puede estar vacio");
       return;
     }
-    if (categoria.isEmpty){
+    if (categoria.isEmpty) {
       showErrorMessage(context, "La categoria no puede estar vacia");
       return;
     }
-    if (estado.isEmpty){
+    if (estado.isEmpty) {
       showErrorMessage(context, "El estado no puede estar vacio");
       return;
     }
-    if (descripcion.isEmpty){
+    if (descripcion.isEmpty) {
       showErrorMessage(context, "La descripcion no puede estar vacia");
       return;
     }
-    if (publicUrl.isEmpty){
+    if (publicUrl.isEmpty) {
       showErrorMessage(context, "Por favor inserte la portada del libro");
       return;
     }
 
     try {
-      await Supabase.instance.client.from("materialAcademico")
-        .insert({
-          "propietarioid": FirebaseAuth.instance.currentUser?.uid ,
-          "titulo": titulo, 
-          "descripcion": descripcion, 
-          "categoria": [categoria],
-          "materia": materia,
-          "estadofisico": estado,
-          "disponible": true,
-          "imagenesurl": [publicUrl],
-          "autor": [autor],
-        });
+      await Supabase.instance.client.from("materialAcademico").insert({
+        "propietarioid": FirebaseAuth.instance.currentUser?.uid,
+        "titulo": titulo,
+        "descripcion": descripcion,
+        "categoria": [categoria],
+        "materia": materia,
+        "estadofisico": estado,
+        "disponible": true,
+        "imagenesurl": [publicUrl],
+        "autor": [autor],
+      });
       showMessageDialog(context, "Libro insertado exitosamente!", "Gracias!");
-      
     } catch (e) {
-      showErrorMessage(context , 'Error inesperado: $e');
+      showErrorMessage(context, 'Error inesperado: $e');
     }
   }
 
@@ -147,7 +172,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
             ),
           ),
           const SizedBox(height: 40),
-          
+
           _buildField("Título de la Publicación:", tituloController),
           _buildField("Autor(es):", autorController),
 
@@ -155,7 +180,9 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
             children: [
               Expanded(child: _buildField("Materia:", materiaController)),
               const SizedBox(width: 20),
-              Expanded(child: _buildField("Año de Publicación:", yearController)),
+              Expanded(
+                child: _buildField("Año de Publicación:", yearController),
+              ),
             ],
           ),
           Row(
@@ -163,7 +190,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
               Expanded(child: _buildField("Categoría:", categoriaController)),
               const SizedBox(width: 20),
               Expanded(
-                child: _buildField("Estado de conservación:", estadoController)
+                child: _buildField("Estado de conservación:", estadoController),
               ),
             ],
           ),
@@ -175,11 +202,16 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
             onPressed: () async => subirImagen(),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 85, 110, 202),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-              child: Text("Subir Portada", style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: Text(
+                "Subir Portada",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ),
           ),
 
@@ -189,12 +221,21 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
               onPressed: () async => publicar(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange.shade800,
-                padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 60,
+                  vertical: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: const Text(
                 "Publicar",
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -203,14 +244,23 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, 
-            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -223,7 +273,10 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 15,
+              ),
             ),
           ),
         ],
