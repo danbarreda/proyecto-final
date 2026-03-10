@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +10,6 @@ class PantallaAdmin extends StatelessWidget {
 
   void _cerrarSesion(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LandingPage()),
       (route) => false,
@@ -88,22 +88,112 @@ class PantallaAdmin extends StatelessWidget {
           const SizedBox(width: 20),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox_outlined, size: 80, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(
-              "Panel de Administración",
-              style: GoogleFonts.inter(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF1E293B),
-              ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection("materialAcademico")
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text("Ocurrió un error al cargar datos."),
+            );
+          }
+
+          final publicaciones = snapshot.data?.docs ?? [];
+          final totalLibros = publicaciones.length;
+
+          Map<String, int> conteoMaterias = {};
+          for (var doc in publicaciones) {
+            final data = doc.data() as Map<String, dynamic>;
+            String materia = data['materia'] ?? 'General';
+            conteoMaterias[materia] = (conteoMaterias[materia] ?? 0) + 1;
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Panel de Administración",
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Card(
+                  elevation: 2,
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.library_books,
+                      color: naranjaSamanet,
+                      size: 40,
+                    ),
+                    title: Text(
+                      "Total de Materiales Publicados",
+                      style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("$totalLibros libros/guías disponibles"),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  "Métricas por Materia",
+                  style: GoogleFonts.inter(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: conteoMaterias.isEmpty
+                      ? Center(
+                          child: Text(
+                            "No hay datos de materias.",
+                            style: GoogleFonts.inter(fontSize: 16),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: conteoMaterias.length,
+                          itemBuilder: (context, index) {
+                            String materia = conteoMaterias.keys.elementAt(
+                              index,
+                            );
+                            int conteo = conteoMaterias[materia]!;
+                            return Card(
+                              child: ListTile(
+                                leading: const Icon(
+                                  Icons.analytics,
+                                  color: Colors.blueAccent,
+                                ),
+                                title: Text(
+                                  materia,
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                trailing: Text(
+                                  "$conteo",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

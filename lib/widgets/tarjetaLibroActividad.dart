@@ -6,7 +6,7 @@ class TarjetaLibroActividad extends StatelessWidget {
   final String estado;
   final Color colorEstado;
   final String subtexto;
-  final String imagenRuta;
+  final String imagenUrl;
 
   const TarjetaLibroActividad({
     super.key,
@@ -14,7 +14,7 @@ class TarjetaLibroActividad extends StatelessWidget {
     required this.estado,
     required this.colorEstado,
     required this.subtexto,
-    required this.imagenRuta,
+    required this.imagenUrl,
   });
 
   @override
@@ -32,24 +32,63 @@ class TarjetaLibroActividad extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(imagenRuta, width: 80, height: 110, fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.book, size: 80),
-            ),
+            child: imagenUrl.isNotEmpty
+                ? Image.network(
+                    imagenUrl,
+                    width: 80,
+                    height: 110,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox(
+                          width: 80,
+                          height: 110,
+                          child: Icon(Icons.book, size: 50, color: Colors.grey),
+                        ),
+                  )
+                : const SizedBox(
+                    width: 80,
+                    height: 110,
+                    child: Icon(Icons.book, size: 50, color: Colors.grey),
+                  ),
           ),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(titulo, style: GoogleFonts.montserrat(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(
+                  titulo,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(color: colorEstado, borderRadius: BorderRadius.circular(5)),
-                  child: Text(estado, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorEstado,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    estado,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 5),
-                Text(subtexto, style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14)),
+                Text(
+                  subtexto,
+                  style: GoogleFonts.inter(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
               ],
             ),
           ),

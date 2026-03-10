@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import "package:google_fonts/google_fonts.dart";
+import 'package:google_fonts/google_fonts.dart';
 
 import '../pages/mainpage.dart';
 import '../pages/singUpPage.dart';
@@ -43,10 +43,12 @@ class _LoginFormState extends State<LoginForm> {
   bool isObscureText = true;
 
   void mostrarError(String mensaje) {
+    if (!mounted) return;
     showErrorMessage(context, mensaje);
   }
 
   void navigate(BuildContext context, Widget page) {
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => page),
       (Route<dynamic> route) => false,
@@ -65,29 +67,29 @@ class _LoginFormState extends State<LoginForm> {
         User? user = credential.user;
 
         if (user != null) {
-          if (!mounted) return;
-
           if (correo == 'admin@unimet.edu.ve') {
+            print("Rol: admin");
+            if (!mounted) return;
             navigate(context, const PantallaAdmin());
             return;
           }
-          final docRef = db.collection("users").doc(correo);
-          docRef
-              .get()
-              .then((DocumentSnapshot doc) {
-                if (doc.exists) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  String role = data["role"] ?? "user";
-                  navigate(context, MainPage(role: role));
-                } else {
-                  navigate(context, const MainPage(role: "user"));
-                }
-              })
-              .catchError((e) {
-                mostrarError('Error al obtener el documento.');
-              });
+
+          final doc = await db.collection("users").doc(correo).get();
+
+          if (!mounted) return;
+
+          if (doc.exists) {
+            final data = doc.data() as Map<String, dynamic>;
+            String role = data["role"] ?? "user";
+            print("Rol: $role");
+            navigate(context, MainPage(role: role));
+          } else {
+            print("Rol: user (por defecto, no se encontró documento)");
+            navigate(context, const MainPage(role: "user"));
+          }
         }
       } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
         if (e.code == 'user-not-found' || e.code == 'invalid-email') {
           mostrarError('No se encontró un usuario con ese correo.');
         } else if (e.code == 'wrong-password' ||
@@ -97,6 +99,7 @@ class _LoginFormState extends State<LoginForm> {
           mostrarError('Error: ${e.message}');
         }
       } catch (e) {
+        if (!mounted) return;
         mostrarError('Ocurrió un error inesperado al iniciar sesión.');
       }
     } else {
