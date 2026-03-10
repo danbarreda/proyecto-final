@@ -5,7 +5,7 @@ class materialAcademico {
   final String descripcion; 
   final List<String> categoria; 
   final String materia;
-  final dynamic estadofisico; 
+  final String estadofisico; 
   final bool disponible;
   final dynamic fechapublicacion; 
   final List<String> imagenesurl;

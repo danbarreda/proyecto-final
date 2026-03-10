@@ -1,5 +1,11 @@
+import 'dart:io';
+import 'package:biblioteca_unimet/widgets/popups.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CrearPublicacionForm extends StatefulWidget {
   const CrearPublicacionForm({super.key});
@@ -11,11 +17,112 @@ class CrearPublicacionForm extends StatefulWidget {
 class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
   final tituloController = TextEditingController();
   final autorController = TextEditingController();
-  final materialController = TextEditingController();
-  final anioController = TextEditingController();
+  final materiaController = TextEditingController();
+  final yearController = TextEditingController();
   final categoriaController = TextEditingController();
   final estadoController = TextEditingController();
   final descController = TextEditingController();
+  final picker = ImagePicker();
+  String publicUrl = "";
+
+  @override
+  void dispose() {
+    tituloController.dispose();
+    autorController.dispose();
+    materiaController.dispose();
+    yearController.dispose();
+    categoriaController.dispose();
+    estadoController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
+
+  void subirImagen() async {
+    String titulo = tituloController.text;
+    String year = yearController.text;
+    /*if (titulo.isEmpty || year.isEmpty){
+      showErrorMessage(context, "Por favor inserte primero el titulo y el año de publicacion antes de insertar la portada");
+      return;
+    }*/
+    final XFile? imagen = await picker.pickImage(source: ImageSource.gallery);
+    if (imagen != null){
+      final bytes = await imagen.readAsBytes();
+      final fileName = "$titulo$year";
+      try {
+        await Supabase.instance.client.storage
+          .from('fotos')
+          .uploadBinary(fileName, bytes);
+        publicUrl = Supabase.instance.client.storage
+          .from('fotos')
+          .getPublicUrl(fileName);
+        print(publicUrl);
+      } catch (e) {
+       showErrorMessage(context , 'Error inesperado: $e');
+      }
+    }
+  }
+
+  void publicar() async{
+    String titulo = tituloController.text;
+    String autor = autorController.text;
+    String materia = materiaController.text;
+    String year = yearController.text;
+    String categoria = categoriaController.text;
+    String estado = estadoController.text;
+    String descripcion = descController.text;
+
+    if (titulo.isEmpty){
+      showErrorMessage(context, "El titulo no puede estar vacio");
+      return;
+    }
+    if (autor.isEmpty){
+      showErrorMessage(context, "El/los autor(es) no puede(n) estar vacio(s)");
+      return;
+    }
+    if (materia.isEmpty){
+      showErrorMessage(context, "La materia no puede estar vacia");
+      return;
+    }
+    if (year.isEmpty){
+      showErrorMessage(context, "El año no puede estar vacio");
+      return;
+    }
+    if (categoria.isEmpty){
+      showErrorMessage(context, "La categoria no puede estar vacia");
+      return;
+    }
+    if (estado.isEmpty){
+      showErrorMessage(context, "El estado no puede estar vacio");
+      return;
+    }
+    if (descripcion.isEmpty){
+      showErrorMessage(context, "La descripcion no puede estar vacia");
+      return;
+    }
+    if (publicUrl.isEmpty){
+      showErrorMessage(context, "Por favor inserte la portada del libro");
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.from("materialAcademico")
+        .insert({
+          "propietarioid": FirebaseAuth.instance.currentUser?.uid ,
+          "titulo": titulo, 
+          "descripcion": descripcion, 
+          "categoria": [categoria],
+          "materia": materia,
+          "estadofisico": estado,
+          "disponible": true,
+          "imagenesurl": [publicUrl],
+          "autor": [autor],
+        });
+      showMessageDialog(context, "Libro insertado exitosamente!", "Gracias!");
+      
+    } catch (e) {
+      showErrorMessage(context , 'Error inesperado: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,16 +153,18 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
 
           Row(
             children: [
-              Expanded(child: _buildField("Tipo de Material:", materialController)),
+              Expanded(child: _buildField("Materia:", materiaController)),
               const SizedBox(width: 20),
-              Expanded(child: _buildField("Año de Publicación:", anioController)),
+              Expanded(child: _buildField("Año de Publicación:", yearController)),
             ],
           ),
           Row(
             children: [
               Expanded(child: _buildField("Categoría:", categoriaController)),
               const SizedBox(width: 20),
-              Expanded(child: _buildField("Estado de conservación:", estadoController)),
+              Expanded(
+                child: _buildField("Estado de conservación:", estadoController)
+              ),
             ],
           ),
 
@@ -63,7 +172,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
 
           const SizedBox(height: 10),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () async => subirImagen(),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 85, 110, 202),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -77,7 +186,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
           const SizedBox(height: 50),
           Center(
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () async => publicar(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange.shade800,
                 padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
