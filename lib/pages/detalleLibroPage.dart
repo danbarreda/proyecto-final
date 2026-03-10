@@ -11,6 +11,15 @@ class DetalleLibroPage extends StatelessWidget {
 
   const DetalleLibroPage({super.key, required this.libro, required this.role});
 
+  Future<bool> yaSolicitado(String? email) async {
+    final data = await Supabase.instance.client
+      .from("solicitudes")
+      .select("*")
+      .eq("libro_id", libro.id)
+      .eq("usuario_correo", email!);
+      return data.length == 1;
+  }
+
   void solicitarLibro(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
 
@@ -19,6 +28,12 @@ class DetalleLibroPage extends StatelessWidget {
         const SnackBar(
           content: Text("Debes iniciar sesión para solicitar un libro."),
         ),
+      );
+      return;
+    }
+    if (await yaSolicitado(user.email)){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ya has solicitado ese libro, puedes revisar su estado en 'Actividad'!")),
       );
       return;
     }
@@ -55,7 +70,6 @@ class DetalleLibroPage extends StatelessWidget {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     bool isDesktop = screenWidth > 700;
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: isDesktop ? BarraSuperiorDesktop(role: role) : const BarraSuperiorMovil(),
@@ -85,8 +99,8 @@ class DetalleLibroPage extends StatelessWidget {
                       child: libro.imagenUrl.isNotEmpty
                           ? Image.network(
                               libro.imagenUrl,
-                              width: isDesktop ? 300 : double.infinity,
-                              height: isDesktop ? 450 : 400,
+                              width: isDesktop ? 300 : 400,
+                              height: isDesktop ? 450 : 500,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   _placeholderImage(isDesktop),
@@ -97,7 +111,7 @@ class DetalleLibroPage extends StatelessWidget {
                       width: isDesktop ? 40 : 0,
                       height: isDesktop ? 0 : 30,
                     ),
-                    Expanded(
+                    isDesktop ? Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -197,7 +211,105 @@ class DetalleLibroPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
+                    ) : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[100],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              libro.carrera,
+                              style: GoogleFonts.inter(
+                                color: Colors.blue[800],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Text(
+                            libro.titulo,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF00235E),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Autor: ${libro.autor.isNotEmpty ? libro.autor.join(', ') : 'Desconocido'}",
+                            style: GoogleFonts.inter(
+                              fontSize: 18,
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          Text(
+                            "Descripción",
+                            style: GoogleFonts.inter(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF00235E),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            libro.descripcion,
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              color: Colors.grey[800],
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                color: Colors.deepOrange,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Estado físico: ${libro.estadoFisico}",
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.deepOrange,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 40),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 55,
+                            child: ElevatedButton(
+                              onPressed: () => solicitarLibro(context),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF37021),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                "Solicitar Material",
+                                style: GoogleFonts.inter(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ],

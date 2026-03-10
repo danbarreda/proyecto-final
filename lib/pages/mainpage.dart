@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:biblioteca_unimet/pages/Adminpage.dart';
+import 'package:biblioteca_unimet/pages/crearPublicacionPage.dart';
 import 'package:biblioteca_unimet/widgets/barraSuperior.dart';
+import 'package:biblioteca_unimet/widgets/navbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:flutter/material.dart';
@@ -368,7 +370,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
           Stack(
             children: [
               SizedBox(
-                height: 300,
+                height: 400,
                 width: double.infinity,
                 child: Image.asset(
                   "assets/images/biblioteca.png",
@@ -380,9 +382,36 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                 left: 0,
                 right: 0,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 20,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  spacing: 10,
                   children: [
+                    Text(
+                      "Bienvenido a Samanet",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      "Rol: ${widget.role[0].toUpperCase()}${widget.role.substring(1)}",
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  if (widget.role.trim().toLowerCase() == "admin")
+                    Center(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const PantallaAdmin()),
+                          );
+                        },
+                        icon: const Icon(Icons.admin_panel_settings),
+                        label: const Text("Panel Admin"),
+                      ),
+                    ),
                     SizedBox(
                       width: screenWidth * 0.65,
                       child: TextField(
@@ -476,6 +505,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                   itemBuilder: (context, index) =>
                       buildLibroCard(context, libros[index], widget.role),
                 ),
+                SizedBox(height: 100,)
               ],
             ),
           ),
@@ -520,18 +550,43 @@ class _MainPageState extends State<MainPage> {
             },
           ),
         ),
-        body: MainPageBodyMovil(filtrosActivos: filtrosActivos, role: widget.role),
+        body: Stack (
+          children: [
+            MainPageBodyMovil(filtrosActivos: filtrosActivos, role: widget.role),
+            Positioned(
+              left: 100,
+              bottom: 20,
+              child: NavBar(role: widget.role)
+            )
+          ]
+        )
       );
     }
   }
 }
 
 Widget buildLibroCard(BuildContext context, Libro libro, String role) {
+
+  Future<bool> yaSolicitado(String? email) async {
+    final data = await Supabase.instance.client
+      .from("solicitudes")
+      .select("*")
+      .eq("libro_id", libro.id)
+      .eq("usuario_correo", email!);
+      return data.isNotEmpty;
+  }
+
   void solicitarLibroDirecto() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Inicia sesión para solicitar un libro.")),
+      );
+      return;
+    }
+    if (await yaSolicitado(user.email)){
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ya has solicitado ese libro, puedes revisar su estado en 'Actividad'!")),
       );
       return;
     }

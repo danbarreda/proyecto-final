@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../pages/homepage.dart';
 
@@ -88,10 +89,10 @@ class PantallaAdmin extends StatelessWidget {
           const SizedBox(width: 20),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("materialAcademico")
-            .snapshots(),
+      body: StreamBuilder(
+        stream: Supabase.instance.client
+          .from("materialAcademico").stream(primaryKey: ["id"])
+          ,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -102,12 +103,11 @@ class PantallaAdmin extends StatelessWidget {
             );
           }
 
-          final publicaciones = snapshot.data?.docs ?? [];
+          final publicaciones = snapshot.data ?? [];
           final totalLibros = publicaciones.length;
 
           Map<String, int> conteoMaterias = {};
-          for (var doc in publicaciones) {
-            final data = doc.data() as Map<String, dynamic>;
+          for (var data in publicaciones) {
             String materia = data['materia'] ?? 'General';
             conteoMaterias[materia] = (conteoMaterias[materia] ?? 0) + 1;
           }
