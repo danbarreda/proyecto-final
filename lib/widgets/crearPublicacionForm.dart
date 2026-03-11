@@ -61,9 +61,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
       final bytes = await imagen.readAsBytes();
 
       String tituloSinAcentos = quitarAcentos(titulo);
-
       String tituloLimpio = tituloSinAcentos.replaceAll(' ', '_');
-
       final fileName = "${tituloLimpio}_$year.jpg";
 
       try {
@@ -73,7 +71,6 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
         publicUrl = Supabase.instance.client.storage
             .from('fotos')
             .getPublicUrl(fileName);
-        print(publicUrl);
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -129,9 +126,15 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
       return;
     }
 
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null || currentUser.email == null) {
+      showErrorMessage(context, "Error: Usuario no autenticado correctamente.");
+      return;
+    }
+
     try {
       await Supabase.instance.client.from("materialAcademico").insert({
-        "propietarioid": FirebaseAuth.instance.currentUser?.uid,
+        "propietarioid": currentUser.email,
         "titulo": titulo,
         "descripcion": descripcion,
         "categoria": [categoria],
@@ -141,6 +144,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
         "imagenesurl": [publicUrl],
         "autor": [autor],
       });
+      if (!mounted) return;
       showMessageDialog(context, "Libro insertado exitosamente!", "Gracias!");
     } catch (e) {
       showErrorMessage(context, 'Error inesperado: $e');

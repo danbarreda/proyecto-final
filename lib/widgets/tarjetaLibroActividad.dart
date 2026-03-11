@@ -7,6 +7,11 @@ class TarjetaLibroActividad extends StatelessWidget {
   final Color colorEstado;
   final String subtexto;
   final String imagenUrl;
+  final bool esEntrante;
+  final VoidCallback? onAceptar;
+  final VoidCallback? onRechazar;
+  final bool mostrarCalificar;
+  final VoidCallback? onCalificar;
 
   const TarjetaLibroActividad({
     super.key,
@@ -15,6 +20,11 @@ class TarjetaLibroActividad extends StatelessWidget {
     required this.colorEstado,
     required this.subtexto,
     required this.imagenUrl,
+    this.esEntrante = false,
+    this.onAceptar,
+    this.onRechazar,
+    this.mostrarCalificar = false,
+    this.onCalificar,
   });
 
   @override
@@ -64,22 +74,26 @@ class TarjetaLibroActividad extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorEstado,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    estado,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorEstado,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        estado,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: 5),
                 Text(
@@ -89,6 +103,42 @@ class TarjetaLibroActividad extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
+                if (esEntrante && estado.toLowerCase() == 'solicitado') ...[
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: onAceptar,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("Aceptar"),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: onRechazar,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text("Rechazar"),
+                      ),
+                    ],
+                  ),
+                ],
+                if (mostrarCalificar) ...[
+                  const SizedBox(height: 15),
+                  ElevatedButton.icon(
+                    onPressed: onCalificar,
+                    icon: const Icon(Icons.star, color: Colors.amber),
+                    label: const Text("Calificar Intercambio"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey[900],
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
