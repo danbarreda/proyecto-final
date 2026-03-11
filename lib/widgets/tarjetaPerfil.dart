@@ -6,11 +6,10 @@ class TarjetaPerfil extends StatelessWidget {
   final String cedula;
   final String correo;
 
-  // 2. Las agregamos al constructor
   const TarjetaPerfil({
-    super.key, 
-    required this.nombre, 
-    required this.cedula, 
+    super.key,
+    required this.nombre,
+    required this.cedula,
     required this.correo,
   });
 
@@ -65,9 +64,15 @@ class TarjetaPerfil extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Text(etiqueta, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18)),
+          Text(
+            etiqueta,
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           const SizedBox(width: 10),
-          Text(valor, style: GoogleFonts.inter(fontSize: 18, color: Colors.grey[600])),
+          Text(
+            valor,
+            style: GoogleFonts.inter(fontSize: 18, color: Colors.grey[600]),
+          ),
         ],
       ),
     );

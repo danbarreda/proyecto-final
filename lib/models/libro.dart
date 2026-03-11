@@ -1,5 +1,6 @@
 class Libro {
   final String id;
+  final String propietarioid;
   final String titulo;
   final List<String> autor;
   final String imagenUrl;
@@ -9,6 +10,7 @@ class Libro {
 
   Libro({
     required this.id,
+    required this.propietarioid,
     required this.titulo,
     required this.autor,
     required this.imagenUrl,

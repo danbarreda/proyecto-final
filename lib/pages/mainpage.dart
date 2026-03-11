@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:biblioteca_unimet/pages/Adminpage.dart';
-import 'package:biblioteca_unimet/pages/crearPublicacionPage.dart';
 import 'package:biblioteca_unimet/widgets/barraSuperior.dart';
 import 'package:biblioteca_unimet/widgets/navbar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -79,6 +78,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
           libros.add(
             Libro(
               id: item["id"]?.toString() ?? "",
+              propietarioid: (item["propietarioid"]?.toString() ?? "").trim(),
               titulo: tituloItem,
               autor: autoresArray,
               imagenUrl: imagenString,
@@ -121,7 +121,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                 top: 100,
                 left: 0,
                 right: 0,
-                child: Column( 
+                child: Column(
                   spacing: 10,
                   children: [
                     Text(
@@ -139,71 +139,72 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                         color: Colors.white70,
                       ),
                     ),
-                  if (widget.role.trim().toLowerCase() == "admin")
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const PantallaAdmin()),
-                          );
-                        },
-                        icon: const Icon(Icons.admin_panel_settings),
-                        label: const Text("Panel Admin"),
+                    if (widget.role.trim().toLowerCase() == "admin")
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PantallaAdmin(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.admin_panel_settings),
+                          label: const Text("Panel Admin"),
+                        ),
                       ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 20,
+                      children: [
+                        SizedBox(
+                          width: min(screenWidth * 0.5, 600),
+                          child: TextField(
+                            controller: publicacionController,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              color: const Color.fromARGB(255, 110, 108, 108),
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: const OutlineInputBorder(),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.5),
+                                borderSide: BorderSide(
+                                  color: Colors.deepOrange.shade400,
+                                  width: 2.0,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.5),
+                                borderSide: const BorderSide(
+                                  color: Colors.blue,
+                                  width: 2.0,
+                                ),
+                              ),
+                              hintText: "Buscar una publicación",
+                              hoverColor: Colors.lightBlue.shade100,
+                            ),
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: buscarPublicacion,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepOrange.shade400,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(
+                            "Buscar",
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 20,
-                    children: [
-                      SizedBox(
-                        width: min(screenWidth * 0.5, 600),
-                        child: TextField(
-                          controller: publicacionController,
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.bold,
-                            color: const Color.fromARGB(255, 110, 108, 108),
-                          ),
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: const OutlineInputBorder(),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.5),
-                              borderSide: BorderSide(
-                                color: Colors.deepOrange.shade400,
-                                width: 2.0,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.5),
-                              borderSide: const BorderSide(
-                                color: Colors.blue,
-                                width: 2.0,
-                              ),
-                            ),
-                            hintText: "Buscar una publicación",
-                            hoverColor: Colors.lightBlue.shade100,
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: buscarPublicacion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepOrange.shade400,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(
-                          "Buscar",
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                   ],
-                    ),
-              
-                  ]
                 ),
               ),
             ],
@@ -248,7 +249,11 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                           childAspectRatio: 0.65,
                         ),
                         itemBuilder: (context, index) {
-                          return buildLibroCard(context, libros[index], widget.role);
+                          return buildLibroCard(
+                            context,
+                            libros[index],
+                            widget.role,
+                          );
                         },
                       ),
                     ],
@@ -266,7 +271,11 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
 class MainPageBodyMovil extends StatefulWidget {
   final List<String> filtrosActivos;
   final String role;
-  const MainPageBodyMovil({super.key, required this.filtrosActivos, required this.role});
+  const MainPageBodyMovil({
+    super.key,
+    required this.filtrosActivos,
+    required this.role,
+  });
 
   @override
   State<MainPageBodyMovil> createState() => _MainPageBodyMovilState();
@@ -339,6 +348,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
           libros.add(
             Libro(
               id: item["id"]?.toString() ?? "",
+              propietarioid: (item["propietarioid"]?.toString() ?? "").trim(),
               titulo: tituloItem,
               autor: autoresArray,
               imagenUrl: imagenString,
@@ -400,18 +410,20 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                         color: Colors.white70,
                       ),
                     ),
-                  if (widget.role.trim().toLowerCase() == "admin")
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const PantallaAdmin()),
-                          );
-                        },
-                        icon: const Icon(Icons.admin_panel_settings),
-                        label: const Text("Panel Admin"),
+                    if (widget.role.trim().toLowerCase() == "admin")
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PantallaAdmin(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.admin_panel_settings),
+                          label: const Text("Panel Admin"),
+                        ),
                       ),
-                    ),
                     SizedBox(
                       width: screenWidth * 0.65,
                       child: TextField(
@@ -505,7 +517,7 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                   itemBuilder: (context, index) =>
                       buildLibroCard(context, libros[index], widget.role),
                 ),
-                SizedBox(height: 100,)
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -550,30 +562,28 @@ class _MainPageState extends State<MainPage> {
             },
           ),
         ),
-        body: Stack (
+        body: Stack(
           children: [
-            MainPageBodyMovil(filtrosActivos: filtrosActivos, role: widget.role),
-            Positioned(
-              left: 100,
-              bottom: 20,
-              child: NavBar(role: widget.role)
-            )
-          ]
-        )
+            MainPageBodyMovil(
+              filtrosActivos: filtrosActivos,
+              role: widget.role,
+            ),
+            Positioned(left: 100, bottom: 20, child: NavBar(role: widget.role)),
+          ],
+        ),
       );
     }
   }
 }
 
 Widget buildLibroCard(BuildContext context, Libro libro, String role) {
-
   Future<bool> yaSolicitado(String? email) async {
     final data = await Supabase.instance.client
-      .from("solicitudes")
-      .select("*")
-      .eq("libro_id", libro.id)
-      .eq("usuario_correo", email!);
-      return data.isNotEmpty;
+        .from("solicitudes")
+        .select("*")
+        .eq("libro_id", libro.id)
+        .eq("usuario_correo", email!);
+    return data.isNotEmpty;
   }
 
   void solicitarLibroDirecto() async {
@@ -584,16 +594,21 @@ Widget buildLibroCard(BuildContext context, Libro libro, String role) {
       );
       return;
     }
-    if (await yaSolicitado(user.email)){
+    if (await yaSolicitado(user.email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Ya has solicitado ese libro, puedes revisar su estado en 'Actividad'!")),
+        const SnackBar(
+          content: Text(
+            "Ya has solicitado ese libro, puedes revisar su estado en 'Actividad'!",
+          ),
+        ),
       );
       return;
     }
     try {
       await Supabase.instance.client.from('solicitudes').insert({
         'libro_id': libro.id,
-        'usuario_correo': user.email,
+        'usuario_correo': user.email!.trim(),
+        'propietario_correo': libro.propietarioid.trim(),
         'estado': 'Solicitado',
         'titulo_libro': libro.titulo,
         'imagen_libro': libro.imagenUrl,
@@ -621,7 +636,9 @@ Widget buildLibroCard(BuildContext context, Libro libro, String role) {
     onTap: () {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => DetalleLibroPage(libro: libro, role: role)),
+        MaterialPageRoute(
+          builder: (context) => DetalleLibroPage(libro: libro, role: role),
+        ),
       );
     },
     child: Container(
@@ -688,6 +705,27 @@ Widget buildLibroCard(BuildContext context, Libro libro, String role) {
                     fontSize: 13,
                     color: Colors.grey[600],
                   ),
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  children: [
+                    const Icon(Icons.person, size: 14, color: Colors.blueGrey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        libro.propietarioid.isNotEmpty
+                            ? libro.propietarioid
+                            : 'Desconocido',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.blueGrey,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
