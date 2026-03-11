@@ -1,5 +1,7 @@
 
 
+import 'dart:math';
+
 import 'package:biblioteca_unimet/pages/crearPublicacionPage.dart';
 import 'package:biblioteca_unimet/pages/misSolicitudespage.dart';
 import 'package:flutter/material.dart';
@@ -110,7 +112,7 @@ class _NavBarState extends State<NavBar> {
                 borderRadius: BorderRadiusGeometry.all(Radius.circular(25)),
                 child: Container(
                   height: 70,
-                  width: screenWidth - 200,
+                  width: max(screenWidth - 200, 300),
                   color: Color.fromARGB(255, 0, 7, 47),
                   child: Row(
                     spacing: 10,

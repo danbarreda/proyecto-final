@@ -197,8 +197,34 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
           ),
-          Row(
-            spacing: 20,
+          screenWidth >300 ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "¿No tienes cuenta?",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const SignUpPage()),
+                  );
+                },
+                child: Text(
+                  "Regístrate aquí",
+                  style: GoogleFonts.inter(
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ) : Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(

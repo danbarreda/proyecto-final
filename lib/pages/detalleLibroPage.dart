@@ -53,7 +53,14 @@ class _DetalleLibroPageState extends State<DetalleLibroPage> {
       );
       return;
     }
-
+    if (user.email!.trim() == widget.libro.propietarioid.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No puedes solicitar tu propio libro."),
+        ),
+      );
+      return;
+    }
     if (await yaSolicitado(user.email)) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

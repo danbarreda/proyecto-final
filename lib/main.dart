@@ -10,7 +10,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-  Supabase.initialize(
+  await Supabase.initialize(
     url: "https://rsslpewxfpfpttvcovyc.supabase.co",
     anonKey: "sb_publishable_i9F2giLC8P1gGXi4u0VWcw_pxVqF9ee",
   );

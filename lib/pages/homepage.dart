@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:biblioteca_unimet/widgets/loginForm.dart';
 import 'package:biblioteca_unimet/widgets/barraSuperior.dart';
 import 'package:flutter/material.dart';
@@ -298,38 +300,64 @@ class _LandingBodyDesktopState extends State<LandingBodyDesktop> {
   }
 }
 
-class LandingBodyMovil extends StatelessWidget {
+class LandingBodyMovil extends StatefulWidget {
   const LandingBodyMovil({super.key});
+
+  @override
+  State<LandingBodyMovil> createState() => _LandingBodyMovilState();
+}
+
+class _LandingBodyMovilState extends State<LandingBodyMovil> {
+  final ScrollController scrollController= ScrollController();
+
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image(
-            image: AssetImage("assets/images/homepagebg.png"),
-            fit: BoxFit.cover,
-          ),
-        ),
-        Column(
-          spacing: 12.5,
-          children: [
-            Container(
-              alignment: Alignment.center,
-              padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: Text(
-                "¡Bienvenido a Samanet!",
-                style: GoogleFonts.museoModerno(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: screenHeight * 0.05,
+      return Scrollbar(
+      controller: scrollController,
+      thumbVisibility: true,
+      trackVisibility: true,
+      child: ListView(
+        controller: scrollController,
+        children: [
+          Stack(
+            children: [
+              Positioned.fill(
+                child: Image(
+                  image: AssetImage("assets/images/homepagebg.png"),
+                  fit: BoxFit.cover,
                 ),
               ),
+              Column(
+                spacing: 12.5,
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    padding: EdgeInsets.fromLTRB(20, 10, 20, 0),
+                    child: Text(
+                      "¡Bienvenido a Samanet!",
+                      style: GoogleFonts.museoModerno(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: screenHeight * 0.05,
+                      ),
+                    ),
+                  ),
+                  Center(child: LoginForm())
+                ]
+              ),
+              ]
             ),
-            Center(child: LoginForm()),
-            Expanded(
+            SizedBox(
+              width: screenWidth,
               child: Column(
                 children: [
                   Container(
@@ -345,7 +373,8 @@ class LandingBodyMovil extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Expanded(
+                  SizedBox(
+                    height: screenWidth > 270 ? screenHeight * 0.3 : min(screenHeight * 0.4, 300),
                     child: Container(
                       color: Colors.white,
                       padding: EdgeInsets.fromLTRB(20, 0, 20, 15),
@@ -354,8 +383,43 @@ class LandingBodyMovil extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          screenWidth > 270 ? Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
+                            spacing: 12,
+                            children: [
+                              Image(
+                                image: AssetImage(
+                                  "assets/images/logounimet.png",
+                                ),
+                                height: 80,
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Universidad Metropolitana",
+                                    textAlign: TextAlign.left,
+                                    style: GoogleFonts.crimsonText(
+                                      color: Colors.deepOrange.shade400,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: screenWidth * 0.045,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Biblioteca Pedro Grases",
+                                    textAlign: TextAlign.left,
+                                    style: GoogleFonts.crimsonText(
+                                      color: Colors.deepOrange.shade400,
+                                      fontWeight: FontWeight.w300,
+                                      fontSize: screenWidth * 0.04,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ) : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             spacing: 12,
                             children: [
                               Image(
@@ -411,9 +475,8 @@ class LandingBodyMovil extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ],
+            ],
+      ),
     );
   }
 }

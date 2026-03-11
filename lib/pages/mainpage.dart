@@ -568,7 +568,7 @@ class _MainPageState extends State<MainPage> {
               filtrosActivos: filtrosActivos,
               role: widget.role,
             ),
-            Positioned(left: 100, bottom: 20, child: NavBar(role: widget.role)),
+            Positioned(left: screenWidth - 200 < 300 ? (screenWidth - 300)/2 : 100, bottom: 20, child: NavBar(role: widget.role)),
           ],
         ),
       );
@@ -586,6 +586,8 @@ Widget buildLibroCard(BuildContext context, Libro libro, String role) {
     return data.isNotEmpty;
   }
 
+
+
   void solicitarLibroDirecto() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
@@ -600,6 +602,14 @@ Widget buildLibroCard(BuildContext context, Libro libro, String role) {
           content: Text(
             "Ya has solicitado ese libro, puedes revisar su estado en 'Actividad'!",
           ),
+        ),
+      );
+      return;
+    }
+    if (user.email!.trim() == libro.propietarioid.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No puedes solicitar tu propio libro, intenta con otro."),
         ),
       );
       return;
