@@ -20,19 +20,41 @@ void showErrorMessage(BuildContext context, String message) {
   );
 }
 
-void showLoading(){
+void showLoading() {
   //popup de carga proximamente
 }
 
-void showMessageDialog(BuildContext context, String message, String title) {
+void showMessageDialog(
+  BuildContext context,
+  String message,
+  String title, {
+  String? secondaryMessage,
+}) {
   showDialog<String>(
     context: context,
     builder: (BuildContext context) => AlertDialog(
       title: Text(title),
-      content: Text(message),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(message),
+          if (secondaryMessage != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              secondaryMessage,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
       actions: <Widget>[
         TextButton(
-          onPressed: () => Navigator.pop(context, 'OK'), 
+          onPressed: () => Navigator.pop(context, 'OK'),
           child: const Text('OK'),
         ),
       ],
