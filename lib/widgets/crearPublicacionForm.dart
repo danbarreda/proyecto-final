@@ -22,6 +22,12 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
   final descController = TextEditingController();
   final picker = ImagePicker();
   String publicUrl = "";
+  final List<String> opcionesEstado = [
+    "Nuevo",
+    "Usado Bueno",
+    "Usado Regular",
+    "Digital",
+  ];
 
   @override
   void dispose() {
@@ -145,7 +151,13 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
         "autor": [autor],
       });
       if (!mounted) return;
-      showMessageDialog(context, "Libro insertado exitosamente!", "Gracias!");
+      showMessageDialog(
+        context,
+        "¡Libro insertado exitosamente!",
+        "Gracias!",
+        secondaryMessage:
+            "Si no visualiza el material, refresque la página principal",
+      );
     } catch (e) {
       showErrorMessage(context, 'Error inesperado: $e');
     }
@@ -192,7 +204,11 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
               Expanded(child: _buildField("Categoría:", categoriaController)),
               const SizedBox(width: 20),
               Expanded(
-                child: _buildField("Estado de conservación:", estadoController),
+                child: _buildDropdownField(
+                  "Estado de conservación:",
+                  estadoController,
+                  opcionesEstado,
+                ),
               ),
             ],
           ),
@@ -256,13 +272,30 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Tooltip(
+                message: "Campo obligatorio",
+                child: Text(
+                  "*",
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           TextField(
@@ -278,6 +311,72 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 15,
                 vertical: 15,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(
+    String label,
+    TextEditingController controller,
+    List<String> items,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Tooltip(
+                message: "Campo obligatorio",
+                child: Text(
+                  "*",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: controller.text.isEmpty ? null : controller.text,
+                hint: const Text("Seleccione"),
+                isExpanded: true,
+                items: items.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    controller.text = newValue!;
+                  });
+                },
               ),
             ),
           ),
