@@ -139,7 +139,7 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                         color: Colors.white70,
                       ),
                     ),
-                    if (widget.role.trim().toLowerCase() == "admin")
+                    widget.role.trim().toLowerCase() == "admin" ?
                       Center(
                         child: ElevatedButton.icon(
                           onPressed: () {
@@ -152,7 +152,14 @@ class _MainPageBodyDesktopState extends State<MainPageBodyDesktop> {
                           icon: const Icon(Icons.admin_panel_settings),
                           label: const Text("Panel Admin"),
                         ),
+                      ) : 
+                      Text(
+                      "Quieres ser administrador? Solicitalo en Actividad!",
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        color: Colors.white70,
                       ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       spacing: 20,
@@ -504,18 +511,66 @@ class _MainPageBodyMovilState extends State<MainPageBodyMovil> {
                   ],
                 ),
                 const SizedBox(height: 15),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: libros.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 0.65,
-                  ),
-                  itemBuilder: (context, index) =>
-                      buildLibroCard(context, libros[index], widget.role),
+                StreamBuilder(
+                  stream: Supabase.instance.client
+                      .from("materialAcademico")
+                      .stream(primaryKey: ["id"]),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text("Ocurrió un error al cargar datos."),
+                      );
+                    }
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: snapshot.data?.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 15,
+                      childAspectRatio: 0.65,
+                    ),
+                    itemBuilder: (context, index) =>
+                        buildLibroCard(
+                          context,
+                          Libro(
+                            id: snapshot.data![index]["id"]?.toString() ?? "",
+                            propietarioid: (snapshot.data![index]["propietarioid"]?.toString() ?? "").trim(),
+                            titulo: snapshot.data![index]["titulo"]?.toString() ?? "Sin Título",
+                            autor: (() {
+                              dynamic autorData = snapshot.data![index]["autor"];
+                              if (autorData is String) {
+                                return [autorData];
+                              } else if (autorData is List) {
+                                return List<String>.from(
+                                  autorData.map((e) => e.toString()),
+                                );
+                              } else {
+                                return ["Desconocido"];
+                              }
+                            })(),
+                            imagenUrl: (() {
+                              dynamic imagenesData = snapshot.data![index]["imagenesurl"];
+                              if (imagenesData is List && imagenesData.isNotEmpty) {
+                                return imagenesData[0].toString();
+                              } else if (imagenesData is String) {
+                                return imagenesData;
+                              } else {
+                                return "";
+                              }
+                            })(),
+                            carrera: snapshot.data![index]["materia"]?.toString() ?? "General",
+                            descripcion: snapshot.data![index]["descripcion"]?.toString() ?? "Sin descripción disponible.",
+                            estadoFisico: snapshot.data![index]["estadofisico"]?.toString() ?? "No especificado",
+                          ),
+                          widget.role,
+                        ),
+                  );
+                    },
                 ),
                 const SizedBox(height: 100),
               ],

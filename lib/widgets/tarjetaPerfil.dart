@@ -15,6 +15,7 @@ class TarjetaPerfil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(25),
@@ -24,7 +25,7 @@ class TarjetaPerfil extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.orange, width: 2),
       ),
-      child: Row(
+      child: /*screenWidth > 800 ?*/ Row(
         children: [
           Container(
             width: 150,
@@ -55,7 +56,39 @@ class TarjetaPerfil extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      ) /*:
+      Column(
+        children: [
+          Container(
+            width: 150,
+            height: 150,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 40),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "MI PERFIL",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(height: 15),
+                _buildDato("Nombre y Apellido:", nombre),
+                _buildDato("Cédula:", cedula),
+                _buildDato("Correo:", correo),
+              ],
+            ),
+          ),
+        ],
+      ),*/
     );
   }
 

@@ -189,6 +189,14 @@ class MisSolicitudesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    String nombreUsuario = "Usuario sin nombre";
+    Future<List<dynamic>> fetchSolicitudesAdmin() async {
+      return await Supabase.instance.client
+        .from('solicitudesAdmin')
+        .select("*")
+        .eq('emailSolicitante', user?.email ?? '') as List<dynamic>;
+    }
+    final Future<List<dynamic>> dataSolicitudAdmin = fetchSolicitudesAdmin();
 
     return Scaffold(
       appBar: BarraSuperiorDesktop(role: role),
@@ -237,12 +245,12 @@ class MisSolicitudesPage extends StatelessWidget {
                       );
                     }
                     final data = snapshot.data!.data() as Map<String, dynamic>;
+                    nombreUsuario = data['nombreCompleto'] ??
+                        data['nombre'] ??
+                        data['name'] ??
+                        "Usuario sin nombre";
                     return TarjetaPerfil(
-                      nombre:
-                          data['nombreCompleto'] ??
-                          data['nombre'] ??
-                          data['name'] ??
-                          "Usuario sin nombre",
+                      nombre: nombreUsuario,
                       cedula: data['cedula'] ?? data['id'] ?? "N/A",
                       correo: user.email ?? "N/A",
                     );
@@ -403,6 +411,84 @@ class MisSolicitudesPage extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 50),
+              if (role.trim().toLowerCase() == "user")
+                Column(
+                  children: [
+                    Text(
+                      "Solicitudes de administrador:",
+                      style: GoogleFonts.inter(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    FutureBuilder<List<dynamic>>(
+                      future: dataSolicitudAdmin,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator(color: Colors.white);
+                        }
+                        if (snapshot.hasError) {
+                          return Text(
+                            "Error al cargar solicitudes.",
+                            style: GoogleFonts.montserrat(fontSize: 18),
+                          );
+                        }
+                        final solicitudes = snapshot.data ?? [];
+                        if (solicitudes.isNotEmpty) {
+                          return Text(
+                            "Solicitud ",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              Text(
+                                "No hay solicitudes de administrador.",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 18,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  try {
+                                    await Supabase.instance.client
+                                        .from('solicitudesAdmin')
+                                        .insert({
+                                          'emailSolicitante': user?.email,
+                                          'estado': 'Pendiente',
+                                          'nombreCompleto': nombreUsuario,
+                                        });
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Solicitud enviada!"),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text("Error: $e"),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: const Text("Solicitar"),
+                              )
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                )
             ],
           ),
         ),

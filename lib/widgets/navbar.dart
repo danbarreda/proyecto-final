@@ -101,17 +101,18 @@ class _NavBarState extends State<NavBar> {
   final buttonColor = Color.fromARGB(255, 255, 255, 255);
 
   final TextStyle actionText = GoogleFonts.inter(
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w500,
     color: Colors.white,
   );
 
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    double iconSize = 20;
     return ClipRRect(
-                borderRadius: BorderRadiusGeometry.all(Radius.circular(25)),
+                borderRadius: BorderRadiusGeometry.all(Radius.circular(17.5)),
                 child: Container(
-                  height: 70,
+                  height: 60,
                   width: max(screenWidth - 200, 300),
                   color: Color.fromARGB(255, 0, 7, 47),
                   child: Row(
@@ -132,14 +133,14 @@ class _NavBarState extends State<NavBar> {
                             icon: Icon(
                               Icons.add,
                               color: buttonColor,
-                              size: 30,
+                              size: iconSize,
                             ),
                             
                           ),
                           Text("Publicar", style: actionText,)
                         ]
                       ),
-                      Container(width: 2, height: 60, color: Colors.white,),
+                      Container(width: 2, height: 45, color: const Color.fromARGB(255, 112, 112, 112),),
                       Column(
                         spacing: 0,
                         children: [ 
@@ -154,14 +155,14 @@ class _NavBarState extends State<NavBar> {
                             icon: Icon(
                               Icons.question_mark,
                               color: buttonColor,
-                              size: 30,
+                              size: iconSize,
                             ),
                             
                           ),
                           Text("Actividad", style: actionText,)
                         ]
                       ),
-                      Container(width: 2, height: 60, color: Colors.white,),
+                      Container(width: 2, height: 45, color: const Color.fromARGB(255, 112, 112, 112),),
                       Column(
                         spacing: 0,
                         children: [ 
@@ -170,7 +171,7 @@ class _NavBarState extends State<NavBar> {
                             icon: Icon(
                               Icons.handshake,
                               color: buttonColor,
-                              size: 30,
+                              size: iconSize,
                             ),
                             
                           ),
