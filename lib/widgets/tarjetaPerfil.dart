@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TarjetaPerfil extends StatelessWidget {
   final String nombre;
@@ -15,7 +16,6 @@ class TarjetaPerfil extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(25),
@@ -25,14 +25,18 @@ class TarjetaPerfil extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.orange, width: 2),
       ),
-      child: /*screenWidth > 800 ?*/ Row(
+      child: Row(
         children: [
           Container(
-            width: 150,
-            height: 150,
+            width: 130,
+            height: 130,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Colors.grey[200],
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.blueGrey, width: 2),
+            ),
+            child: const Center(
+              child: Icon(Icons.person, size: 70, color: Colors.blueGrey),
             ),
           ),
           const SizedBox(width: 40),
@@ -40,55 +44,94 @@ class TarjetaPerfil extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "MI PERFIL",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.grey[700],
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "MI PERFIL",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    StreamBuilder<List<Map<String, dynamic>>>(
+                      stream: Supabase.instance.client
+                          .from('feedbacks')
+                          .stream(primaryKey: ['id'])
+                          .eq('evaluado_correo', correo),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting)
+                          return const SizedBox.shrink();
+                        final feedbacks = snapshot.data ?? [];
+                        if (feedbacks.isEmpty)
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              "Sin calificaciones",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+
+                        double total = 0;
+                        for (var fb in feedbacks) {
+                          total += (fb['calificacion'] ?? 5);
+                        }
+                        double promedio = total / feedbacks.length;
+
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.amber),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                promedio.toStringAsFixed(1),
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.orange[800],
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 18,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 15),
-                _buildDato("Nombre y Apellido:", nombre),
+                _buildDato("Nombre:", nombre),
                 _buildDato("Cédula:", cedula),
                 _buildDato("Correo:", correo),
               ],
             ),
           ),
         ],
-      ) /*:
-      Column(
-        children: [
-          Container(
-            width: 150,
-            height: 150,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 40),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "MI PERFIL",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.grey[700],
-                  ),
-                ),
-                const SizedBox(height: 15),
-                _buildDato("Nombre y Apellido:", nombre),
-                _buildDato("Cédula:", cedula),
-                _buildDato("Correo:", correo),
-              ],
-            ),
-          ),
-        ],
-      ),*/
+      ),
     );
   }
 
@@ -99,12 +142,15 @@ class TarjetaPerfil extends StatelessWidget {
         children: [
           Text(
             etiqueta,
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 18),
+            style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(width: 10),
-          Text(
-            valor,
-            style: GoogleFonts.inter(fontSize: 18, color: Colors.grey[600]),
+          Expanded(
+            child: Text(
+              valor,
+              style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[600]),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

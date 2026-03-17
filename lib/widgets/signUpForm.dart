@@ -18,10 +18,13 @@ class _SignUpFormState extends State<SignUpForm> {
   String password = "";
   String cedulaStr = "";
   String nombresApellidos = "";
+  String tipoUsuario = "Estudiante";
+  String especificacionRol = "";
   final correoController = TextEditingController();
   final passwordController = TextEditingController();
   final cedulaController = TextEditingController();
   final nombresApellidosController = TextEditingController();
+  final especificacionController = TextEditingController();
   bool isObscureText = true;
   final db = FirebaseFirestore.instance;
   late final usersCollection = db.collection("users");
@@ -43,23 +46,16 @@ class _SignUpFormState extends State<SignUpForm> {
     password = passwordController.text;
     nombresApellidos = nombresApellidosController.text;
     cedulaStr = cedulaController.text;
+    especificacionRol = especificacionController.text;
     int? cedulaParsed = int.tryParse(cedulaStr);
 
-    if (correo.isEmpty) {
+    if (correo.isEmpty ||
+        password.isEmpty ||
+        cedulaStr.isEmpty ||
+        nombresApellidos.isEmpty ||
+        especificacionRol.isEmpty) {
       if (!mounted) return;
-      showErrorMessage(context, "El campo correo no debe estar vacío.");
-      return;
-    }
-
-    if (password.isEmpty) {
-      if (!mounted) return;
-      showErrorMessage(context, "La contraseña no debe estar vacía.");
-      return;
-    }
-
-    if (cedulaStr.isEmpty) {
-      if (!mounted) return;
-      showErrorMessage(context, "La cédula no debe estar vacía.");
+      showErrorMessage(context, "Todos los campos son obligatorios.");
       return;
     }
 
@@ -67,41 +63,17 @@ class _SignUpFormState extends State<SignUpForm> {
       if (!mounted) return;
       showErrorMessage(
         context,
-        "La cédula no puede contener puntos ni letras, deben ser solamente caracteres numéricos\nEjemplo: 25867420",
+        "La cédula deben ser solamente caracteres numéricos.",
       );
       return;
     }
 
-    if (nombresApellidos.isEmpty) {
+    if (!correo.contains("@correo.unimet.edu.ve") &&
+        !correo.contains("@unimet.edu.ve")) {
       if (!mounted) return;
       showErrorMessage(
         context,
-        "Los nombres y apellidos no deben estar vacíos.",
-      );
-      return;
-    }
-
-    if (!correo.contains("@")) {
-      if (!mounted) return;
-      showErrorMessage(context, "Correo inválido. Debe contener '@'.");
-      return;
-    }
-
-    List<String> parts = correo.split("@");
-    if (parts.length != 2) {
-      if (!mounted) return;
-      showErrorMessage(context, "Correo inválido.");
-      return;
-    }
-
-    String domain = parts[1].toLowerCase();
-    bool validDomain =
-        domain == "correo.unimet.edu.ve" || domain == "unimet.edu.ve";
-    if (!validDomain) {
-      if (!mounted) return;
-      showErrorMessage(
-        context,
-        "El correo debe pertenecer a la familia UNIMET: ejemplo@correo.unimet.edu.ve o ejemplo@unimet.edu.ve",
+        "El correo debe pertenecer a la familia UNIMET.",
       );
       return;
     }
@@ -112,21 +84,27 @@ class _SignUpFormState extends State<SignUpForm> {
         password: password,
       );
 
-      await usersCollection.doc(correo).set({
+      Map<String, dynamic> userData = {
         "role": "user",
+        "tipo": tipoUsuario,
         "cedula": cedulaStr,
         "nombre": nombresApellidos,
-      });
+      };
+
+      if (tipoUsuario == "Estudiante") {
+        userData["carrera"] = especificacionRol;
+      } else {
+        userData["departamento"] = especificacionRol;
+      }
+
+      await usersCollection.doc(correo).set(userData);
 
       if (!mounted) return;
       navigate(const MainPage(role: "user"));
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       if (e.code == 'weak-password') {
-        showErrorMessage(
-          context,
-          "La contraseña es muy corta o sencilla. Debe tener al menos 6 caracteres.",
-        );
+        showErrorMessage(context, "La contraseña es muy corta o sencilla.");
       } else if (e.code == 'email-already-in-use') {
         showErrorMessage(
           context,
@@ -135,12 +113,6 @@ class _SignUpFormState extends State<SignUpForm> {
       } else {
         showErrorMessage(context, "Ocurrió un error: ${e.message}");
       }
-    } catch (e) {
-      if (!mounted) return;
-      showErrorMessage(
-        context,
-        "No se pudo crear la cuenta. Inténtalo de nuevo.",
-      );
     }
   }
 
@@ -198,6 +170,48 @@ class _SignUpFormState extends State<SignUpForm> {
                   screenWidth,
                   true,
                 ),
+                const SizedBox(height: 20),
+                Text("Soy:", style: textStyle),
+                const SizedBox(height: 10),
+                Container(
+                  width: isDesktop
+                      ? min(screenWidth * 0.5, 600)
+                      : screenWidth - 100,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.5),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: tipoUsuario,
+                      items: ["Estudiante", "Docente"].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          tipoUsuario = newValue!;
+                          especificacionController.clear();
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  tipoUsuario == "Estudiante" ? "Carrera:" : "Departamento:",
+                  style: textStyle,
+                ),
+                const SizedBox(height: 10),
+                _buildTextField(
+                  especificacionController,
+                  isDesktop,
+                  screenWidth,
+                  false,
+                ),
               ],
             ),
             const SizedBox(height: 40),
@@ -215,7 +229,7 @@ class _SignUpFormState extends State<SignUpForm> {
                 ),
               ),
               child: Text(
-                "Acceder",
+                "Registrarse",
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
