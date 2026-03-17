@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FilterSidebar extends StatefulWidget {
-  final Function(List<String>) onFilterApplied;
+  final Function(Map<String, List<String>>) onFilterApplied;
   const FilterSidebar({super.key, required this.onFilterApplied});
 
   @override
@@ -10,7 +10,6 @@ class FilterSidebar extends StatefulWidget {
 }
 
 class _FilterSidebarState extends State<FilterSidebar> {
-  List<String> carrerasSeleccionadas = [];
   final Map<String, bool> _carreras = {
     "Ciencias Administrativas": false,
     "Comunicación Social": false,
@@ -30,6 +29,13 @@ class _FilterSidebarState extends State<FilterSidebar> {
     "Matematicas Industriales": false,
   };
 
+  final Map<String, bool> _estados = {
+    "Nuevo": false,
+    "Usado Bueno": false,
+    "Usado Regular": false,
+    "Digital": false,
+  };
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -39,34 +45,65 @@ class _FilterSidebarState extends State<FilterSidebar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Filtrar por Carrera",
+            "Filtros Avanzados",
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Carrera / Materia",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 10),
           Expanded(
+            flex: 2,
             child: ListView(
               children: _carreras.keys
-                  .map((nombre) => _crearCheckbox(nombre))
+                  .map((nombre) => _crearCheckbox(nombre, _carreras))
+                  .toList(),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "Estado Físico",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            flex: 1,
+            child: ListView(
+              children: _estados.keys
+                  .map((nombre) => _crearCheckbox(nombre, _estados))
                   .toList(),
             ),
           ),
           Center(
             child: ElevatedButton(
               onPressed: () {
-                List<String> seleccion = _carreras.entries
-                .where((entry) => entry.value == true)
-                .map((entry) => entry.key)
-                .toList();
-
-                setState(() {
-                  carrerasSeleccionadas = seleccion;
-                });
-                widget.onFilterApplied(seleccion);
+                Map<String, List<String>> filtros = {
+                  "carreras": _carreras.entries
+                      .where((e) => e.value)
+                      .map((e) => e.key)
+                      .toList(),
+                  "estados": _estados.entries
+                      .where((e) => e.value)
+                      .map((e) => e.key)
+                      .toList(),
+                };
+                widget.onFilterApplied(filtros);
               },
-              child: const Text("Aplicar Filtro"),
+              child: const Text("Aplicar Filtros"),
             ),
           ),
         ],
@@ -74,13 +111,17 @@ class _FilterSidebarState extends State<FilterSidebar> {
     );
   }
 
-  Widget _crearCheckbox(String carrera) {
+  Widget _crearCheckbox(String llave, Map<String, bool> mapa) {
     return CheckboxListTile(
-      title: Text(carrera, style: const TextStyle(fontSize: 14)),
-      value: _carreras[carrera],
+      title: Text(
+        llave,
+        style: const TextStyle(fontSize: 14, color: Colors.white),
+      ),
+      value: mapa[llave],
+      activeColor: Colors.orange,
       controlAffinity: ListTileControlAffinity.leading,
       onChanged: (bool? valor) {
-        setState(() => _carreras[carrera] = valor!);
+        setState(() => mapa[llave] = valor!);
       },
     );
   }

@@ -99,36 +99,18 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
     String estado = estadoController.text;
     String descripcion = descController.text;
 
-    if (titulo.isEmpty) {
-      showErrorMessage(context, "El titulo no puede estar vacio");
-      return;
-    }
-    if (autor.isEmpty) {
-      showErrorMessage(context, "El/los autor(es) no puede(n) estar vacio(s)");
-      return;
-    }
-    if (materia.isEmpty) {
-      showErrorMessage(context, "La materia no puede estar vacia");
-      return;
-    }
-    if (year.isEmpty) {
-      showErrorMessage(context, "El año no puede estar vacio");
-      return;
-    }
-    if (categoria.isEmpty) {
-      showErrorMessage(context, "La categoria no puede estar vacia");
-      return;
-    }
-    if (estado.isEmpty) {
-      showErrorMessage(context, "El estado no puede estar vacio");
-      return;
-    }
-    if (descripcion.isEmpty) {
-      showErrorMessage(context, "La descripcion no puede estar vacia");
-      return;
-    }
-    if (publicUrl.isEmpty) {
-      showErrorMessage(context, "Por favor inserte la portada del libro");
+    if (titulo.isEmpty ||
+        autor.isEmpty ||
+        materia.isEmpty ||
+        year.isEmpty ||
+        categoria.isEmpty ||
+        estado.isEmpty ||
+        descripcion.isEmpty ||
+        publicUrl.isEmpty) {
+      showErrorMessage(
+        context,
+        "Por favor llene todos los campos y suba la portada.",
+      );
       return;
     }
 
@@ -139,6 +121,21 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
     }
 
     try {
+      final validacion = await Supabase.instance.client
+          .from("materialAcademico")
+          .select()
+          .eq("titulo", titulo)
+          .eq("propietarioid", currentUser.email!);
+
+      if (validacion.isNotEmpty) {
+        if (!mounted) return;
+        showErrorMessage(
+          context,
+          "Ya tienes un libro publicado con este mismo título.",
+        );
+        return;
+      }
+
       await Supabase.instance.client.from("materialAcademico").insert({
         "propietarioid": currentUser.email,
         "titulo": titulo,
@@ -158,6 +155,7 @@ class _CrearPublicacionFormState extends State<CrearPublicacionForm> {
         secondaryMessage:
             "Si no visualiza el material, refresque la página principal",
       );
+      Navigator.pop(context);
     } catch (e) {
       showErrorMessage(context, 'Error inesperado: $e');
     }

@@ -10,6 +10,7 @@ class TarjetaLibroActividad extends StatelessWidget {
   final bool esEntrante;
   final VoidCallback? onAceptar;
   final VoidCallback? onRechazar;
+  final VoidCallback? onEntregado;
   final bool mostrarCalificar;
   final VoidCallback? onCalificar;
 
@@ -23,6 +24,7 @@ class TarjetaLibroActividad extends StatelessWidget {
     this.esEntrante = false,
     this.onAceptar,
     this.onRechazar,
+    this.onEntregado,
     this.mostrarCalificar = false,
     this.onCalificar,
   });
@@ -125,6 +127,19 @@ class TarjetaLibroActividad extends StatelessWidget {
                         child: const Text("Rechazar"),
                       ),
                     ],
+                  ),
+                ],
+                if (estado.toLowerCase() == 'aceptado' &&
+                    onEntregado != null) ...[
+                  const SizedBox(height: 15),
+                  ElevatedButton.icon(
+                    onPressed: onEntregado,
+                    icon: const Icon(Icons.check_circle),
+                    label: const Text("Marcar como Entregado"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ],
                 if (mostrarCalificar) ...[
